@@ -14,3 +14,4 @@ session.vim
 app/google-services.json
 *.iml
 .idea/libraries
+.idea/vcs.xml
