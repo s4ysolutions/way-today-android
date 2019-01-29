@@ -1,0 +1,16 @@
+.gradle
+.DS_Store
+/build
+/app/build
+.hgignore
+.hg
+.hgtags
+*.apk
+session.vim
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/tasks.xml
+.idea/caches
+app/google-services.json
+*.iml
+.idea/libraries
