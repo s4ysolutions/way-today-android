@@ -15,11 +15,11 @@ public class GRPCChannelProviderTest {
     private PreferenceGRPCPort grpcPort = mock(PreferenceGRPCPort.class);
 
     @Test
-    public void consequenceCalls_returnsSameChannel() {
+    public void consequenceCalls_returnsSameChannel() throws GRPCChannelProvider.PortNotSetException {
         GRPCChannelProvider provider = new GRPCChannelProvider(grpcHost, grpcPort);
 
-        when(grpcHost.get()).thenReturn("some");
-        when(grpcPort.get()).thenReturn(9999);
+        when(grpcHost.getValue()).thenReturn("some");
+        when(grpcPort.getValue()).thenReturn(9999);
         ManagedChannel ch1 = provider.channel();
         ManagedChannel ch2 = provider.channel();
 
@@ -28,14 +28,14 @@ public class GRPCChannelProviderTest {
     }
 
     @Test
-    public void consequenceCallsWithDifferentHosts_returnsDifferentChannels() {
+    public void consequenceCallsWithDifferentHosts_returnsDifferentChannels() throws GRPCChannelProvider.PortNotSetException {
         GRPCChannelProvider provider = new GRPCChannelProvider(grpcHost, grpcPort);
-        when(grpcHost.get()).thenReturn("some");
-        when(grpcPort.get()).thenReturn(9999);
+        when(grpcHost.getValue()).thenReturn("some");
+        when(grpcPort.getValue()).thenReturn(9999);
 
         ManagedChannel ch1 = provider.channel();
 
-        when(grpcHost.get()).thenReturn("another");
+        when(grpcHost.getValue()).thenReturn("another");
         ManagedChannel ch2 = provider.channel();
 
         assertThat(ch1).isNotNull();
@@ -45,14 +45,14 @@ public class GRPCChannelProviderTest {
 
 
     @Test
-    public void consequenceCallsWithDifferentPorts_returnsDifferentChannels() {
+    public void consequenceCallsWithDifferentPorts_returnsDifferentChannels() throws GRPCChannelProvider.PortNotSetException {
         GRPCChannelProvider provider = new GRPCChannelProvider(grpcHost, grpcPort);
-        when(grpcHost.get()).thenReturn("some");
-        when(grpcPort.get()).thenReturn(9999);
+        when(grpcHost.getValue()).thenReturn("some");
+        when(grpcPort.getValue()).thenReturn(9999);
 
         ManagedChannel ch1 = provider.channel();
 
-        when(grpcPort.get()).thenReturn(8888);
+        when(grpcPort.getValue()).thenReturn(8888);
         ManagedChannel ch2 = provider.channel();
 
         assertThat(ch1).isNotNull();

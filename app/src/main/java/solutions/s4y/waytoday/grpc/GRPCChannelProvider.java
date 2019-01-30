@@ -12,26 +12,35 @@ public class GRPCChannelProvider {
     private ManagedChannel sChannel;
     private @NonNull
     String usedHost = "";
-    private int usedPort;
+    private Integer usedPort;
+
+    public ManagedChannel channel() throws PortNotSetException {
+        if (!usedHost.equals(host.getValue()) || !usedPort.equals(port.getValue())) {
+            sChannel = null;
+        }
+        if (sChannel == null) {
+            usedPort = port.getValue();
+            String nulledHost = host.getValue();
+            usedHost = nulledHost == null ? "" : nulledHost;
+            if (port.getValue() == null) {
+                throw new PortNotSetException();
+            }
+            sChannel = ManagedChannelBuilder
+                    .forAddress(host.getValue(), port.getValue())
+                    .usePlaintext(true)
+                    .build();
+        }
+        return sChannel;
+    }
 
     public GRPCChannelProvider(@NonNull PreferenceGRPCHost host, @NonNull PreferenceGRPCPort port) {
         this.host = host;
         this.port = port;
     }
 
-    public ManagedChannel channel() {
-        if (!usedHost.equals(host.get()) || usedPort != port.get()) {
-            sChannel = null;
+    static class PortNotSetException extends Throwable {
+        PortNotSetException() {
+            super("GRPC port is not set");
         }
-        if (sChannel == null) {
-            usedPort = port.get();
-            String nulledHost = host.get();
-            usedHost = nulledHost == null ? "" : nulledHost;
-            sChannel = ManagedChannelBuilder
-                    .forAddress(host.get(), port.get())
-                    .usePlaintext(true)
-                    .build();
-        }
-        return sChannel;
     }
 }
