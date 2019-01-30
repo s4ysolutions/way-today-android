@@ -4,32 +4,16 @@ import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
 
-public class BooleanPreference {
-    private final SharedPreferences preferences;
-    private final String key;
-    private final boolean defaultValue;
+public class BooleanPreference extends LiveDataPreference<Boolean> {
 
     protected BooleanPreference(@NonNull SharedPreferences preferences,
                                 @NonNull String key,
-                                boolean defaultValue) {
-        this.preferences = preferences;
-        this.key = key;
-        this.defaultValue = defaultValue;
+                                Boolean defaultValue) {
+        super(preferences, key, defaultValue);
     }
 
-    public boolean get() {
-        return preferences.getBoolean(key, defaultValue);
-    }
-
-    public boolean isSet() {
-        return preferences.contains(key);
-    }
-
-    public void set(boolean value) {
-        preferences.edit().putBoolean(key, value).apply();
-    }
-
-    public void delete() {
-        preferences.edit().remove(key).apply();
+    @Override
+    Boolean getValueFromPreferences(String key, Boolean defaultValue) {
+        return getValue();
     }
 }
