@@ -19,7 +19,7 @@ import solutions.s4y.waytoday.errors.ErrorNotifier;
 import solutions.s4y.waytoday.grpc.GRPCChannelProvider;
 import solutions.s4y.waytoday.grpc.TrackerGrpc;
 import solutions.s4y.waytoday.grpc.TrackerOuterClass;
-import solutions.s4y.waytoday.preferences.entries.PreferenceTrackID;
+import solutions.s4y.waytoday.preferences.PreferenceTrackID;
 
 
 public class IDService extends JobIntentService {
@@ -93,7 +93,7 @@ public class IDService extends JobIntentService {
 
                 TrackerOuterClass.GenerateTrackerIDResponse response = grpcStub.generateTrackerID(req);
                 final String tid = response.getTid();
-                trackID.setValue(tid);
+                trackID.set(tid);
             } catch (final Exception e) {
                 reportFail(e);
             }
