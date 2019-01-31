@@ -3,17 +3,17 @@ package solutions.s4y.waytoday;
 import javax.inject.Singleton;
 
 import dagger.Component;
-import solutions.s4y.waytoday.errors.ErrorsModule;
-import solutions.s4y.waytoday.grpc.GRPCChannelProviderModule;
+import solutions.s4y.waytoday.errors.DaggerErrorsModule;
+import solutions.s4y.waytoday.grpc.DaggerGRPCChannelProviderModule;
 import solutions.s4y.waytoday.idservice.IDService;
-import solutions.s4y.waytoday.preferences.PreferencesModule;
+import solutions.s4y.waytoday.preferences.DaggerPreferencesModule;
 
 @Singleton
 @Component(modules = {
-        ApplicationModule.class,
-        ErrorsModule.class,
-        PreferencesModule.class,
-        GRPCChannelProviderModule.class
+        DaggerApplicationModule.class,
+        DaggerErrorsModule.class,
+        DaggerPreferencesModule.class,
+        DaggerGRPCChannelProviderModule.class
 })
 
 public interface AppComponent {

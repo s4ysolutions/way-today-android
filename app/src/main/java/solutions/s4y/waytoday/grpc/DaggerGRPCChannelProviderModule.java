@@ -8,7 +8,7 @@ import solutions.s4y.waytoday.preferences.PreferenceGRPCHost;
 import solutions.s4y.waytoday.preferences.PreferenceGRPCPort;
 
 @Module
-public class GRPCChannelProviderModule {
+public class DaggerGRPCChannelProviderModule {
     @Provides
     @Singleton
     GRPCChannelProvider provideGRPCChannelProvider(PreferenceGRPCHost host, PreferenceGRPCPort port) {

@@ -4,7 +4,7 @@ import dagger.Module;
 import dagger.Provides;
 
 @Module()
-public class ErrorsModule {
+public class DaggerErrorsModule {
     @Provides
     ErrorReporter provideErrorReporter() {
         return new ErrorReporter();

@@ -10,10 +10,10 @@ import dagger.Module;
 import dagger.Provides;
 
 @Module()
-class ApplicationModule {
+class DaggerApplicationModule {
     private final WTApplication application;
 
-    ApplicationModule(WTApplication application) {
+    DaggerApplicationModule(WTApplication application) {
         this.application = application;
     }
 

@@ -31,7 +31,7 @@ public class WTApplication extends Application {
 
     protected AppComponent prepareAppComponent() {
         return DaggerAppComponent.builder()
-                .applicationModule(new ApplicationModule(this)).build();
+                .applicationModule(new DaggerApplicationModule(this)).build();
     }
 
     public AppComponent getAppComponent() {
