@@ -38,7 +38,7 @@ public class GRPCChannelProvider {
         this.port = port;
     }
 
-    static class PortNotSetException extends Throwable {
+    static class PortNotSetException extends Exception {
         PortNotSetException() {
             super("GRPC port is not set");
         }
