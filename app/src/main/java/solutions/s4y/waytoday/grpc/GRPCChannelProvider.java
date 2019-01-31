@@ -3,8 +3,8 @@ package solutions.s4y.waytoday.grpc;
 import androidx.annotation.NonNull;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
-import solutions.s4y.waytoday.preferences.entries.PreferenceGRPCHost;
-import solutions.s4y.waytoday.preferences.entries.PreferenceGRPCPort;
+import solutions.s4y.waytoday.preferences.PreferenceGRPCHost;
+import solutions.s4y.waytoday.preferences.PreferenceGRPCPort;
 
 public class GRPCChannelProvider {
     private PreferenceGRPCHost host;
@@ -12,35 +12,25 @@ public class GRPCChannelProvider {
     private ManagedChannel sChannel;
     private @NonNull
     String usedHost = "";
-    private Integer usedPort;
+    private int usedPort;
 
-    public ManagedChannel channel() throws PortNotSetException {
-        if (!usedHost.equals(host.getValue()) || !usedPort.equals(port.getValue())) {
-            sChannel = null;
-        }
-        if (sChannel == null) {
-            usedPort = port.getValue();
-            String nulledHost = host.getValue();
-            usedHost = nulledHost == null ? "" : nulledHost;
-            if (port.getValue() == null) {
-                throw new PortNotSetException();
-            }
-            sChannel = ManagedChannelBuilder
-                    .forAddress(host.getValue(), port.getValue())
-                    .usePlaintext(true)
-                    .build();
-        }
-        return sChannel;
-    }
-
-    public GRPCChannelProvider(@NonNull PreferenceGRPCHost host, @NonNull PreferenceGRPCPort port) {
+    GRPCChannelProvider(@NonNull PreferenceGRPCHost host, @NonNull PreferenceGRPCPort port) {
         this.host = host;
         this.port = port;
     }
 
-    static class PortNotSetException extends Exception {
-        PortNotSetException() {
-            super("GRPC port is not set");
+    public ManagedChannel channel() {
+        if (!usedHost.equals(host.get()) || usedPort != port.get()) {
+            sChannel = null;
         }
+        if (sChannel == null) {
+            usedPort = port.get();
+            usedHost = host.get();
+            sChannel = ManagedChannelBuilder
+                    .forAddress(host.get(), port.get())
+                    .usePlaintext(true)
+                    .build();
+        }
+        return sChannel;
     }
 }

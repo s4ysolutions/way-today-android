@@ -4,8 +4,8 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
-import solutions.s4y.waytoday.preferences.entries.PreferenceGRPCHost;
-import solutions.s4y.waytoday.preferences.entries.PreferenceGRPCPort;
+import solutions.s4y.waytoday.preferences.PreferenceGRPCHost;
+import solutions.s4y.waytoday.preferences.PreferenceGRPCPort;
 
 @Module
 public class GRPCChannelProviderModule {
