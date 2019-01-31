@@ -6,13 +6,9 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
-import solutions.s4y.waytoday.preferences.entries.PreferenceGRPCHost;
-import solutions.s4y.waytoday.preferences.entries.PreferenceGRPCPort;
-import solutions.s4y.waytoday.preferences.entries.PreferenceIsTracking;
-import solutions.s4y.waytoday.preferences.entries.PreferenceTrackID;
 
 @Module()
-public class PreferencesModule {
+public class DaggerPreferencesModule {
     @Provides
     @Singleton
     PreferenceIsTracking providePreferenceIsTracking(SharedPreferences sp) {

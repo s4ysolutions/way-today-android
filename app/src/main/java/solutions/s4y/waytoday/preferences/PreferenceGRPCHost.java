@@ -1,13 +1,18 @@
-package solutions.s4y.waytoday.preferences.entries;
+package solutions.s4y.waytoday.preferences;
 
 import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
 import solutions.s4y.waytoday.BuildConfig;
-import solutions.s4y.waytoday.preferences.StringPreference;
 
-public class PreferenceGRPCHost extends StringPreference {
+public class PreferenceGRPCHost extends BaseStringPreference {
     public PreferenceGRPCHost(@NonNull SharedPreferences preferences) {
         super(preferences, "grpchost", BuildConfig.GRPC_HOST);
+    }
+
+    @NonNull
+    public String get() {
+        String boxed = getBoxed();
+        return boxed == null ? "" : boxed;
     }
 }
