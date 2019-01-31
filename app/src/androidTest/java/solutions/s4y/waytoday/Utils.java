@@ -14,18 +14,20 @@ public class Utils {
                 .url("http://" + TEST_HOST + ":8001/1/admin/clear")
                 .build();
         Response response = client.newCall(request).execute();
+        response.body().close();
         if (response.code() != 200) {
             throw new Exception("Failed to clean up, http status=" + response.code());
         }
     }
 
-    public static void randSeed(int seed) throws Exception {
+    private static void randSeed(int seed) throws Exception {
         OkHttpClient client = new OkHttpClient();
         Request request = new Request
                 .Builder()
                 .url("http://" + TEST_HOST + ":8001/1/admin/rand?seed=" + seed)
                 .build();
         Response response = client.newCall(request).execute();
+        response.body().close();
         if (response.code() != 200) {
             throw new Exception("Failed to seed, http status=" + response.code());
         }
