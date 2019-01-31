@@ -13,7 +13,12 @@ public class BooleanPreference extends LiveDataPreference<Boolean> {
     }
 
     @Override
-    Boolean getValueFromPreferences(String key, Boolean defaultValue) {
-        return getValue();
+    Boolean getValueFromPreferences() {
+        return preferences.getBoolean(key, defaultValue == null ? false : defaultValue);
+    }
+
+    @Override
+    void putValueToPreferencesEditor(SharedPreferences.Editor editor, Boolean value) {
+        editor.putBoolean(key, value);
     }
 }

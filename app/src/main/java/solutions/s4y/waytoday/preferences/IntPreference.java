@@ -13,7 +13,12 @@ public class IntPreference extends LiveDataPreference<Integer> {
     }
 
     @Override
-    Integer getValueFromPreferences(String key, Integer defaultValue) {
-        return getValue();
+    Integer getValueFromPreferences() {
+        return preferences.getInt(key, defaultValue == null ? 0 : defaultValue);
+    }
+
+    @Override
+    void putValueToPreferencesEditor(SharedPreferences.Editor editor, Integer value) {
+        editor.putInt(key, value);
     }
 }

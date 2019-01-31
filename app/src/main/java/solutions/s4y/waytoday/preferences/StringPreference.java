@@ -14,7 +14,12 @@ public class StringPreference extends LiveDataPreference<String> {
     }
 
     @Override
-    String getValueFromPreferences(String key, String defaultValue) {
-        return getValue();
+    String getValueFromPreferences() {
+        return preferences.getString(key, defaultValue);
+    }
+
+    @Override
+    void putValueToPreferencesEditor(SharedPreferences.Editor editor, String value) {
+        editor.putString(key, value);
     }
 }

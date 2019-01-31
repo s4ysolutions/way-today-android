@@ -9,12 +9,12 @@ import androidx.lifecycle.LiveData;
 abstract class LiveDataPreference<T> extends LiveData<T> {
     public final T defaultValue;
     protected final SharedPreferences preferences;
-    private final String key;
+    protected final String key;
     private SharedPreferences.OnSharedPreferenceChangeListener mChangeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
         @Override
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             if (key == LiveDataPreference.this.key) {
-                setValue(getValueFromPreferences(key, defaultValue));
+                setValue(getValueFromPreferences());
             }
         }
     };
@@ -27,12 +27,14 @@ abstract class LiveDataPreference<T> extends LiveData<T> {
         this.defaultValue = defaultValue;
     }
 
-    abstract T getValueFromPreferences(String key, T defaultValue);
+    abstract T getValueFromPreferences();
+
+    abstract void putValueToPreferencesEditor(SharedPreferences.Editor editor, T value);
 
     @Override
     protected void onActive() {
         super.onActive();
-        setValue(getValueFromPreferences(key, defaultValue));
+        setValue(getValueFromPreferences());
         preferences.registerOnSharedPreferenceChangeListener(mChangeListener);
     }
 
@@ -40,6 +42,14 @@ abstract class LiveDataPreference<T> extends LiveData<T> {
     protected void onInactive() {
         preferences.unregisterOnSharedPreferenceChangeListener(mChangeListener);
         super.onInactive();
+    }
+
+    @Override
+    public void setValue(T value) {
+        SharedPreferences.Editor editor = preferences.edit();
+        putValueToPreferencesEditor(editor, value);
+        editor.apply();
+        super.setValue(value);
     }
 
     public boolean isSet() {
