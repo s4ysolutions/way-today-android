@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Way.Today</string>
+    <string name="no_location_manager">Device has not GPS sensor</string>
 </resources>
