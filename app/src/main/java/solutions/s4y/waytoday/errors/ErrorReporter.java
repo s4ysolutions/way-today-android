@@ -13,22 +13,20 @@ public class ErrorReporter { // for testing purpose
         return mToast != null && mToast.getView() != null && mToast.getView().isShown();
     }
 
-    private void toastAndCrash(final Context context, final ErrorNotification err) {
-        if (isToasting()) {
-            mToast.cancel();
+    public void report(Context context, ErrorNotification err) {
+        if (err.toast) {
+            if (isToasting()) {
+                mToast.cancel();
+            }
+            mToast =
+                    err.hasResourceID()
+                            ? Toast.makeText(context, err.getMessage(), Toast.LENGTH_SHORT)
+                            : Toast.makeText(context, err.getMessage(), Toast.LENGTH_SHORT);
+            mToast.show();
         }
-        mToast = Toast.makeText(context, err.getMessage(), Toast.LENGTH_SHORT);
-        mToast.show();
+        if (err.th != null) {
+            Log.e("WT message", err.getMessage(), err.th);
 //        Crashlytics.logException(err.th);
-    }
-
-    public void errorToast(Context context, ErrorNotification err) {
-        toastAndCrash(context, err);
-        Log.e("WT message", err.getMessage(), err.th);
-    }
-
-    public void warnToast(Context context, Throwable th) {
-        toastAndCrash(context, new ErrorNotification(th));
-        Log.w("WT message", th);
+        }
     }
 }

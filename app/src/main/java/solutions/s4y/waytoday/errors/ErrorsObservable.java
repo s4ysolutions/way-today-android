@@ -14,6 +14,10 @@ public class ErrorsObservable {
         subject.onNext(new ErrorNotification(throwable));
     }
 
+    public static void notify(int resourceID, boolean toast) {
+        subject.onNext(new ErrorNotification(resourceID, true));
+    }
+
     public static void notify(Throwable throwable, boolean toast) {
         subject.onNext(new ErrorNotification(throwable, toast));
     }
@@ -24,6 +28,10 @@ public class ErrorsObservable {
 
     public static void toast(Throwable throwable) {
         notify(throwable, true);
+    }
+
+    public static void toast(int resourceID) {
+        notify(resourceID, true);
     }
 
 }
