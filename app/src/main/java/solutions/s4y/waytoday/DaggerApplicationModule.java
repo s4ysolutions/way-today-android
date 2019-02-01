@@ -1,6 +1,5 @@
 package solutions.s4y.waytoday;
 
-import android.app.Application;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
@@ -15,12 +14,6 @@ class DaggerApplicationModule {
 
     DaggerApplicationModule(WTApplication application) {
         this.application = application;
-    }
-
-    @Provides
-    @Singleton
-    Application application() {
-        return application;
     }
 
     @Provides
