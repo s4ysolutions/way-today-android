@@ -9,7 +9,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-public class ErrorNotifierTest {
+public class ErrorsObservableTest {
 
     @Test
     public void errorObserver_shouldRecieveNotification() {
@@ -17,21 +17,21 @@ public class ErrorNotifierTest {
         verify(run, never()).run();
 
         Exception e = new Exception();
-        ErrorNotifier.notify(e);
+        ErrorsObservable.notify(e);
         verify(run, never()).run();
 
-        Disposable d = ErrorNotifier
+        Disposable d = ErrorsObservable
                 .subject
                 .subscribe(err -> {
                     run.run();
                 });
 
-        ErrorNotifier.notify(e);
+        ErrorsObservable.notify(e);
         verify(run, times(1)).run();
 
         d.dispose();
 
-        ErrorNotifier.notify(e);
+        ErrorsObservable.notify(e);
         verify(run, times(1)).run();
     }
 }

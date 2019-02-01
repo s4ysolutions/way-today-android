@@ -15,7 +15,7 @@ import androidx.core.app.JobIntentService;
 import io.grpc.ManagedChannel;
 import solutions.s4y.waytoday.AppComponent;
 import solutions.s4y.waytoday.WTApplication;
-import solutions.s4y.waytoday.errors.ErrorNotifier;
+import solutions.s4y.waytoday.errors.ErrorsObservable;
 import solutions.s4y.waytoday.grpc.GRPCChannelProvider;
 import solutions.s4y.waytoday.grpc.TrackerGrpc;
 import solutions.s4y.waytoday.grpc.TrackerOuterClass;
@@ -48,7 +48,7 @@ public class IDService extends JobIntentService {
     }
 
     private void reportFail(Throwable e) {
-        ErrorNotifier.notify(e);
+        ErrorsObservable.notify(e);
     }
 
     protected boolean isConnected() {

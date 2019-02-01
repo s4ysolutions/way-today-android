@@ -21,7 +21,7 @@ import solutions.s4y.waytoday.TestComponent;
 import solutions.s4y.waytoday.Utils;
 import solutions.s4y.waytoday.WTApplication;
 import solutions.s4y.waytoday.errors.ErrorNotification;
-import solutions.s4y.waytoday.errors.ErrorNotifier;
+import solutions.s4y.waytoday.errors.ErrorsObservable;
 import solutions.s4y.waytoday.preferences.PreferenceGRPCHost;
 import solutions.s4y.waytoday.preferences.PreferenceGRPCPort;
 import solutions.s4y.waytoday.preferences.PreferenceIsTracking;
@@ -96,7 +96,7 @@ public class IDServiceTest {
         when(grpcPort.get()).thenReturn(31459);
 
         //noinspection unchecked
-        disposable.add(ErrorNotifier.subject.subscribe(mockErrorObserver));
+        disposable.add(ErrorsObservable.subject.subscribe(mockErrorObserver));
 
         WTApplication application = ApplicationProvider.getApplicationContext();
 
@@ -113,7 +113,7 @@ public class IDServiceTest {
         when(trackID.get()).thenReturn("");
 
         //noinspection unchecked
-        disposable.add(ErrorNotifier.subject.subscribe(mockErrorObserver));
+        disposable.add(ErrorsObservable.subject.subscribe(mockErrorObserver));
 
         WTApplication application = ApplicationProvider.getApplicationContext();
 
@@ -128,7 +128,7 @@ public class IDServiceTest {
         when(isTracking.get()).thenReturn(false);
 
         //noinspection unchecked
-        disposable.add(ErrorNotifier.subject.subscribe(mockErrorObserver));
+        disposable.add(ErrorsObservable.subject.subscribe(mockErrorObserver));
 
         WTApplication application = ApplicationProvider.getApplicationContext();
 
