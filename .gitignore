@@ -7,6 +7,7 @@
 .hgtags
 *.apk
 session.vim
+.idea/assetWizardSettings.xml
 .idea/caches
 .idea/libraries
 .idea/misc.xml
