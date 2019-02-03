@@ -19,3 +19,19 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+-dontwarn android.test.**
+-dontwarn com.google.common.**
+-dontwarn javax.naming.**
+-dontwarn okio.**
+-dontwarn org.junit.**
+-dontwarn org.mockito.**
+-dontwarn sun.reflect.**
+-dontwarn sun.misc.Unsafe
+-dontwarn com.google.protobuf.UnsafeUtil
+-dontwarn com.google.protobuf.UnsafeUtil#1
+# Ignores: can't find referenced class javax.lang.model.element.Modifier
+-dontwarn com.google.errorprone.annotations.**
+
+# Ignores: can't find referenced method from grpc-testing's compileOnly dependency on Truth
+-dontwarn io.grpc.testing.DeadlineSubject
