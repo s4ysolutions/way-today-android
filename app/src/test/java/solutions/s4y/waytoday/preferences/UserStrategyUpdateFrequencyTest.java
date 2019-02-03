@@ -5,20 +5,23 @@ import org.junit.Test;
 import solutions.s4y.waytoday.R;
 
 import static com.google.common.truth.Truth.assertThat;
-import static solutions.s4y.waytoday.preferences.PreferenceUserStrategyUpdateFrequency.Frequencies.HOUR1;
-import static solutions.s4y.waytoday.preferences.PreferenceUserStrategyUpdateFrequency.Frequencies.MIN1;
-import static solutions.s4y.waytoday.preferences.PreferenceUserStrategyUpdateFrequency.Frequencies.MIN15;
-import static solutions.s4y.waytoday.preferences.PreferenceUserStrategyUpdateFrequency.Frequencies.MIN30;
-import static solutions.s4y.waytoday.preferences.PreferenceUserStrategyUpdateFrequency.Frequencies.MIN5;
-import static solutions.s4y.waytoday.preferences.PreferenceUserStrategyUpdateFrequency.Frequencies.SEC1;
-import static solutions.s4y.waytoday.preferences.PreferenceUserStrategyUpdateFrequency.Frequencies.SEC15;
-import static solutions.s4y.waytoday.preferences.PreferenceUserStrategyUpdateFrequency.Frequencies.SEC5;
+import static solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency.Frequencies.HOUR1;
+import static solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency.Frequencies.MIN1;
+import static solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency.Frequencies.MIN15;
+import static solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency.Frequencies.MIN30;
+import static solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency.Frequencies.MIN5;
+import static solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency.Frequencies.OFF;
+import static solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency.Frequencies.SEC1;
+import static solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency.Frequencies.SEC15;
+import static solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency.Frequencies.SEC5;
 
 public class UserStrategyUpdateFrequencyTest {
     @Test
     public void userStrategy_shouldReturnCorrectPrev() {
-        assertThat(SEC1.getPrev())
+        assertThat(OFF.getPrev())
                 .isNull();
+        assertThat(SEC1.getPrev())
+                .isEqualTo(OFF);
         assertThat(SEC5.getPrev())
                 .isEqualTo(SEC1);
         assertThat(SEC15.getPrev())
@@ -37,6 +40,8 @@ public class UserStrategyUpdateFrequencyTest {
 
     @Test
     public void userStrategy_shouldReturnCorrectNext() {
+        assertThat(OFF.getNext())
+                .isEqualTo(SEC1);
         assertThat(SEC1.getNext())
                 .isEqualTo(SEC5);
         assertThat(SEC5.getNext())
@@ -57,6 +62,8 @@ public class UserStrategyUpdateFrequencyTest {
 
     @Test
     public void userStrategy_shouldReturnCorrectResID() {
+        assertThat(OFF.getTitleResID())
+                .isEqualTo(R.string.off);
         assertThat(SEC1.getTitleResID())
                 .isEqualTo(R.string.freq_sec_1);
         assertThat(SEC5.getTitleResID())
@@ -74,5 +81,4 @@ public class UserStrategyUpdateFrequencyTest {
         assertThat(HOUR1.getTitleResID())
                 .isEqualTo(R.string.freq_hour_1);
     }
-
 }
