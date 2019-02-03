@@ -5,7 +5,7 @@ import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 
 public class Utils {
-    public static final String TEST_HOST="192.168.1.132";
+    public static final String TEST_HOST = "prod2.s4y.solutions";
     public static final String FIRST_RAND_ID = "126";
     public static void cleanDb() throws Exception {
         OkHttpClient client = new OkHttpClient();

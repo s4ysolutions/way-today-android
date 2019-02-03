@@ -64,9 +64,9 @@ public class IDServiceTest {
 
     @Before
     public void setUp() throws Exception {
+        disposable = new CompositeDisposable();
         Utils.cleanDb();
         Utils.randReset();
-        disposable = new CompositeDisposable();
 
         WTApplication application = ApplicationProvider.getApplicationContext();
         TestComponent component = (TestComponent) application.getAppComponent();

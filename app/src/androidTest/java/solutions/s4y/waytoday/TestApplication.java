@@ -15,7 +15,7 @@ public class TestApplication extends WTApplication {
 
         return DaggerTestComponent
                 .builder()
-                .applicationModule(new DaggerApplicationModule(this))
+                .daggerApplicationModule(new DaggerApplicationModule(this))
                 .build();
     }
 }

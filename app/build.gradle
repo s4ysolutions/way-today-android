@@ -22,7 +22,7 @@ android {
         debug {
             testCoverageEnabled false
             buildConfigField "int", "GRPC_PORT", "9001"
-            buildConfigField "String", "GRPC_HOST", "\"192.168.1.132\""
+            buildConfigField "String", "GRPC_HOST", "\"prod2.s4y.solutions\""
         }
     }
     compileOptions {
@@ -83,9 +83,11 @@ dependencies {
     annotationProcessor 'com.jakewharton:butterknife-compiler:10.0.0'
 
 //    testImplementation 'junit:junit:4.12'
+    testImplementation 'androidx.test:rules:1.1.1'
     testImplementation 'androidx.test.ext:junit:1.1.0'
     testImplementation 'com.google.truth:truth:0.42'
     testImplementation "org.mockito:mockito-inline:2.23.4"
+    testImplementation 'org.robolectric:robolectric:4.1'
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.0'
     androidTestImplementation 'androidx.test:core:1.1.0'
