@@ -1,11 +1,11 @@
 package solutions.s4y.waytoday.strategies;
 
-import solutions.s4y.waytoday.preferences.PreferenceUserStrategyUpdateFrequency;
+import solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency;
 
 public class UserStrategy implements Strategy {
-    private final PreferenceUserStrategyUpdateFrequency preference;
+    private final PreferenceUpdateFrequency preference;
 
-    UserStrategy(PreferenceUserStrategyUpdateFrequency preference) {
+    UserStrategy(PreferenceUpdateFrequency preference) {
         this.preference = preference;
     }
 

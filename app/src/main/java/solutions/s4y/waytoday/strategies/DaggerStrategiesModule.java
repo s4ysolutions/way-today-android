@@ -4,13 +4,13 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
-import solutions.s4y.waytoday.preferences.PreferenceUserStrategyUpdateFrequency;
+import solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency;
 
 @Module
 public class DaggerStrategiesModule {
     @Provides
     @Singleton
-    UserStrategy providesUserStrategy(PreferenceUserStrategyUpdateFrequency preference) {
+    UserStrategy providesUserStrategy(PreferenceUpdateFrequency preference) {
         return new UserStrategy(preference);
     }
 }
