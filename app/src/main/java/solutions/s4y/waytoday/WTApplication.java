@@ -49,7 +49,7 @@ public class WTApplication extends Application {
 
     protected AppComponent prepareAppComponent() {
         return DaggerAppComponent.builder()
-                .applicationModule(new DaggerApplicationModule(this)).build();
+                .daggerApplicationModule(new DaggerApplicationModule(this)).build();
     }
 
     public AppComponent getAppComponent() {
