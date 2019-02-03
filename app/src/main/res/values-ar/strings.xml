@@ -2,4 +2,15 @@
 <resources>
     <string name="app_name">Way.Today</string>
     <string name="no_location_manager">الجهاز لا يحتوي على مستشعر GPS</string>
+    <string name="upload_not_ok">التحميل فشل</string>
+    <string name="title">طريق اليوم</string>
+    <string name="freq_hour_1">ساعة واحدة</string>
+    <string name="freq_min_30">نصف ساعه</string>
+    <string name="freq_min_15">15 دقيقة</string>
+    <string name="freq_min_1">1 دقيقة</string>
+    <string name="freq_min_5">5 دقائق</string>
+    <string name="freq_sec_15">15 ثانية</string>
+    <string name="freq_sec_5">5 ثوان</string>
+    <string name="freq_sec_1">ثانية واحدة</string>
+    <string name="off">ايقاف</string>
 </resources>

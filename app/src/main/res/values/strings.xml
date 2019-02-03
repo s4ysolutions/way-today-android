@@ -1,4 +1,16 @@
 <resources>
     <string name="app_name">Way.Today</string>
     <string name="no_location_manager">Device has not GPS sensor</string>
+    <string name="upload_not_ok">Upload failed</string>
+    <string name="title">Way.Today</string>
+    <string name="empty" translatable="false" />
+    <string name="freq_hour_1">1 hour</string>
+    <string name="freq_min_30">Half an hour</string>
+    <string name="freq_min_15">15 minutes</string>
+    <string name="freq_min_5">5 minutes</string>
+    <string name="freq_min_1">1 minute</string>
+    <string name="freq_sec_15">15 seconds</string>
+    <string name="freq_sec_5">5 seconds</string>
+    <string name="freq_sec_1">1 second</string>
+    <string name="off">Off</string>
 </resources>

@@ -4,12 +4,150 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     tools:context=".MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!" />
+    <Space
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="4"
+        android:minWidth="240dp"
+        android:orientation="vertical">
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:id="@+id/gesture_controller"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center_vertical"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="9"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/title_prev_3"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        app:autoSizeTextType="uniform" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="9"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/title_prev_2"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        app:autoSizeTextType="uniform" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="9"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/title_prev_1"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        app:autoSizeTextType="uniform" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/row_current"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="10"
+                    android:orientation="horizontal">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/title_current"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:textColor="@android:color/black"
+                        app:autoSizeTextType="uniform" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="9"
+                    android:alpha="0.75"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/title_next_1"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        app:autoSizeTextType="uniform" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="9"
+                    android:alpha="0.5"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/title_next_2"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        app:autoSizeTextType="uniform" />
+                </LinearLayout>
+
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="9"
+                    android:addStatesFromChildren="true"
+                    android:alpha="0.25"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/title_next_3"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        app:autoSizeTextType="uniform" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"></LinearLayout>
+    </LinearLayout>
+
+    <Space
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1" />
 
 </LinearLayout>

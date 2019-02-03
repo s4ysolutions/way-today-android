@@ -2,4 +2,15 @@
 <resources>
     <string name="app_name">Way.Today</string>
     <string name="no_location_manager">Устройство не имеет GPS датчика</string>
+    <string name="upload_not_ok">Отправка точек не удалась</string>
+    <string name="title">Просто путь</string>
+    <string name="freq_hour_1">1 час</string>
+    <string name="freq_min_30">Полчаса</string>
+    <string name="freq_min_15">15 минут</string>
+    <string name="freq_min_1">1 минута</string>
+    <string name="freq_min_5">5 минут</string>
+    <string name="freq_sec_15">15 секунд</string>
+    <string name="freq_sec_5">5 секунд</string>
+    <string name="freq_sec_1">1 секунда</string>
+    <string name="off">Выключено</string>
 </resources>
