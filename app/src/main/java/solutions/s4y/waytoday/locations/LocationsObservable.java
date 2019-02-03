@@ -6,6 +6,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import io.reactivex.Observable;
+import solutions.s4y.waytoday.strategies.Strategy;
 
 class LocationsObservable {
     static Observable<Location> fromUpdater(@NonNull final LocationsUpdater updater, @NonNull final Strategy strategy) {

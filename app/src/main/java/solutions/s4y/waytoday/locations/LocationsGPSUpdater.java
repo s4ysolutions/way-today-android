@@ -6,13 +6,16 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 import solutions.s4y.waytoday.R;
 import solutions.s4y.waytoday.errors.ErrorsObservable;
 import solutions.s4y.waytoday.permissions.PermissionRequestObservable;
 import solutions.s4y.waytoday.permissions.RestartOnGivenPermssion;
+import solutions.s4y.waytoday.strategies.Strategy;
 
 public class LocationsGPSUpdater implements LocationsUpdater {
-    private LocationManager mLocationManager;
+    @VisibleForTesting
+    public LocationManager mLocationManager;
 
     LocationsGPSUpdater(@NonNull Context context) {
         mLocationManager = (LocationManager) context
