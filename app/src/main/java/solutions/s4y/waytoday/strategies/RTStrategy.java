@@ -1,4 +1,4 @@
-package solutions.s4y.waytoday.locations;
+package solutions.s4y.waytoday.strategies;
 
 public class RTStrategy implements Strategy {
     @Override
