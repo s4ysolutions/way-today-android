@@ -3,14 +3,16 @@ package solutions.s4y.waytoday.preferences;
 import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
+import io.reactivex.subjects.PublishSubject;
 
-abstract class BasePreference<T> {
+public abstract class BasePreference<T> {
+    @NonNull
+    public final SharedPreferences preferences;
     @NonNull
     final T defaultValue;
     @NonNull
-    final SharedPreferences preferences;
-    @NonNull
-    final String key;
+    public final String key;
+    public PublishSubject<T> subject = PublishSubject.create();
 
     BasePreference(@NonNull SharedPreferences preferences,
                    @NonNull String key,
@@ -28,6 +30,7 @@ abstract class BasePreference<T> {
         SharedPreferences.Editor editor = preferences.edit();
         putValueToPreferencesEditor(editor, value);
         editor.apply();
+        subject.onNext(value);
     }
 
     public boolean isSet() {
