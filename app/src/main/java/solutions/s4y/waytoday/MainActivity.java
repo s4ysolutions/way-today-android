@@ -58,8 +58,8 @@ public class MainActivity extends AppCompatActivity {
         resumeDisposables = new CompositeDisposable();
         resumeDisposables.add(mUserStrategy
                 .observable
-                .subscribe(userStrategy -> updateUserStrategy()));
-        updateUserStrategy();
+                .subscribe(userStrategy -> updateUserStrategyChooser()));
+        updateUserStrategyChooser();
     }
 
     @Override
@@ -73,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
     }
 
-    private void updateUserStrategy() {
+    private void updateUserStrategyChooser() {
 
         UserStrategy.UpdateFrequency currentFreq;
         currentFreq = mIsTracking.get() ? null : mUserStrategy.current();
