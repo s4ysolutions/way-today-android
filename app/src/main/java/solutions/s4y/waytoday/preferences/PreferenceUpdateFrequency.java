@@ -6,41 +6,57 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import solutions.s4y.waytoday.R;
 
-public class PreferenceUserStrategyUpdateFrequency extends BaseStringPreference {
-    PreferenceUserStrategyUpdateFrequency(@NonNull SharedPreferences preferences) {
-        super(preferences, "freq", Frequencies.SEC1.toString());
+public class PreferenceUpdateFrequency extends BaseStringPreference {
+    static final String key = "freq";
+    static private final String off = Frequencies.OFF.toString();
+
+    PreferenceUpdateFrequency(@NonNull SharedPreferences preferences) {
+        super(preferences, key, Frequencies.SEC1.toString());
     }
 
     public Frequencies get() {
-        String s = super.getBoxed();
+        String s = getBoxed();
         return Frequencies.valueOf(s);
     }
 
-    void set(@NonNull Frequencies value) {
+    public boolean isOn() {
+        return !off.equals(getBoxed());
+    }
+
+    public boolean isOff() {
+        return off.equals(getBoxed());
+    }
+
+    private void set(@NonNull Frequencies value) {
         set(value.toString());
     }
 
-    public boolean next() {
+    public void next() {
         Frequencies next = get().getNext();
-        if (next == null)
-            return false;
-        set(next);
-        return true;
+        if (next != null) set(next);
     }
 
-    public boolean prev() {
+    public void prev() {
         Frequencies prev = get().getPrev();
-        if (prev == null)
-            return false;
-        set(prev);
-        return true;
+        if (prev != null)
+            set(prev);
+    }
+
+
+    public void move(int direction) {
+        if (direction < 0) {
+            for (int i = direction; i < 0; i++) {
+                prev();
+            }
+        } else {
+            for (int i = direction; i > 0; i--) {
+                next();
+            }
+        }
     }
 
     public enum Frequencies {
-        SEC1, SEC5, SEC15, MIN1, MIN5, MIN15, MIN30, HOUR1;
-
-        public static final Frequencies FIRST = SEC1;
-        public static final Frequencies LAST = HOUR1;
+        OFF, SEC1, SEC5, SEC15, MIN1, MIN5, MIN15, MIN30, HOUR1;
 
         @Nullable
         public Frequencies getPrev() {
@@ -59,6 +75,8 @@ public class PreferenceUserStrategyUpdateFrequency extends BaseStringPreference 
                     return SEC5;
                 case SEC5:
                     return SEC1;
+                case SEC1:
+                    return OFF;
                 default:
                     return null;
             }
@@ -132,8 +150,11 @@ public class PreferenceUserStrategyUpdateFrequency extends BaseStringPreference 
                 case SEC5:
                     resid = R.string.freq_sec_5;
                     break;
-                default:
+                case SEC1:
                     resid = R.string.freq_sec_1;
+                    break;
+                default:
+                    resid = R.string.off;
                     break;
             }
             return resid;

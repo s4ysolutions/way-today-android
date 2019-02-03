@@ -11,12 +11,6 @@ import dagger.Provides;
 public class DaggerPreferencesModule {
     @Provides
     @Singleton
-    PreferenceIsTracking providePreferenceIsTracking(SharedPreferences sp) {
-        return new PreferenceIsTracking(sp);
-    }
-
-    @Provides
-    @Singleton
     PreferenceTrackID providePreferenceTrackID(SharedPreferences sp) {
         return new PreferenceTrackID(sp);
     }
@@ -35,7 +29,7 @@ public class DaggerPreferencesModule {
 
     @Provides
     @Singleton
-    PreferenceUserStrategyUpdateFrequency provideUserStrategyUpdateFrequency(SharedPreferences sp) {
-        return new PreferenceUserStrategyUpdateFrequency(sp);
+    PreferenceUpdateFrequency provideUserStrategyUpdateFrequency(SharedPreferences sp) {
+        return new PreferenceUpdateFrequency(sp);
     }
 }

@@ -15,8 +15,8 @@ import io.reactivex.disposables.Disposable;
 import solutions.s4y.waytoday.BuildConfig;
 import solutions.s4y.waytoday.WTApplication;
 import solutions.s4y.waytoday.errors.ErrorsObservable;
-import solutions.s4y.waytoday.preferences.PreferenceIsTracking;
 import solutions.s4y.waytoday.preferences.PreferenceTrackID;
+import solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency;
 import solutions.s4y.waytoday.strategies.RTStrategy;
 import solutions.s4y.waytoday.strategies.Strategy;
 
@@ -27,7 +27,7 @@ public class LocationsService extends Service {
     static public final String FLAG_FOREGROUND = "ffg";
     static public Strategy currentStrategy = new RTStrategy();
     @Inject
-    PreferenceIsTracking mIsTracking;
+    PreferenceUpdateFrequency mUpdateFrequency;
     @Inject
     PreferenceTrackID mTrackID;
 
