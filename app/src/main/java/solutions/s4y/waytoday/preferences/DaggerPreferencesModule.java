@@ -32,4 +32,10 @@ public class DaggerPreferencesModule {
     PreferenceGRPCPort providePreferenceGRPCPort(SharedPreferences sp) {
         return new PreferenceGRPCPort(sp);
     }
+
+    @Provides
+    @Singleton
+    PreferenceUserStrategyUpdateFrequency provideUserStrategyUpdateFrequency(SharedPreferences sp) {
+        return new PreferenceUserStrategyUpdateFrequency(sp);
+    }
 }
