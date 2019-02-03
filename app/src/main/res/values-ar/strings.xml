@@ -13,4 +13,9 @@
     <string name="freq_sec_5">5 ثوان</string>
     <string name="freq_sec_1">ثانية واحدة</string>
     <string name="off">ايقاف</string>
+    <string name="status_tracking">Tracking status</string>
+    <string name="status_gps">TODO</string>
+    <string name="status_upload">TODO</string>
+    <string name="trackid">مسار</string>
+    <string name="show_on_map">عرض على الخريطة</string>
 </resources>

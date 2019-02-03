@@ -13,4 +13,9 @@
     <string name="freq_sec_5">5 seconds</string>
     <string name="freq_sec_1">1 second</string>
     <string name="off">Off</string>
+    <string name="status_tracking">Tracking status</string>
+    <string name="status_gps">TODO</string>
+    <string name="status_upload">TODO</string>
+    <string name="trackid">Track ID:</string>
+    <string name="show_on_map">Show on map</string>
 </resources>

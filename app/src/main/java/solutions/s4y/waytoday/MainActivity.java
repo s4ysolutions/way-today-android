@@ -5,6 +5,9 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import javax.inject.Inject;
@@ -13,11 +16,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GestureDetectorCompat;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import butterknife.OnTouch;
 import io.reactivex.disposables.CompositeDisposable;
 import solutions.s4y.waytoday.errors.ErrorsObservable;
 import solutions.s4y.waytoday.mainactivity.FrequencyGestureListener;
 import solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency;
+import solutions.s4y.waytoday.sound.MediaPlayerUtils;
 
 public class MainActivity extends AppCompatActivity {
     private final static String LT = AppCompatActivity.class.getSimpleName();
@@ -42,28 +47,16 @@ public class MainActivity extends AppCompatActivity {
     View mViewRowCurrent;
     @BindView(R.id.gesture_controller)
     ViewGroup mViewGestureController;
-
-    @BindView(R.id.text_status)
-    TextView mTextViewStatus;
+    @BindView(R.id.switch_on)
+    ImageView mImageBtnOn;
+    @BindView(R.id.switch_off)
+    ImageView mImageBtnOff;
 
     private CompositeDisposable resumeDisposables;
     private GestureDetectorCompat mDetector;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        ((WTApplication) getApplication()).getAppComponent().inject(this);
-        setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
-        mTextViewTitlePrev3.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitlePrev2.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitlePrev1.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitleNext1.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitleNext2.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitleNext3.setTag(R.id.TAG_IS_TITLE, true);
-        mDetector = new GestureDetectorCompat(this,
-                new FrequencyGestureListener(mViewGestureController, mUserStrategyFrequency));
-    }
+    private Animation mSwitchAnimationFadeOut;
+    private Animation mSwitchAnimationFadeIn;
+    private boolean isSwitching;
 
     @Override
     protected void onResume() {
@@ -103,6 +96,80 @@ public class MainActivity extends AppCompatActivity {
             Log.d(LT, "R.id.gesture_controller OnTouch gesture not detected");
         }
         return super.onTouchEvent(event);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        ((WTApplication) getApplication()).getAppComponent().inject(this);
+        setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
+        mTextViewTitlePrev3.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitlePrev2.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitlePrev1.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitleNext1.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitleNext2.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitleNext3.setTag(R.id.TAG_IS_TITLE, true);
+        mDetector = new GestureDetectorCompat(this,
+                new FrequencyGestureListener(mViewGestureController, mUserStrategyFrequency));
+        mSwitchAnimationFadeIn = AnimationUtils.loadAnimation(this, R.anim.fadein);
+        mSwitchAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout);
+    }
+
+    @OnClick(R.id.switch_on)
+    public void switchOn(View view) {
+        if (isSwitching) return;
+        MediaPlayerUtils.getInstance().playSwitchSound(this);
+        isSwitching = true;
+        mImageBtnOff.startAnimation(mSwitchAnimationFadeIn);
+        mImageBtnOn.startAnimation(mSwitchAnimationFadeOut);
+        mSwitchAnimationFadeOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                mImageBtnOff.setVisibility(View.VISIBLE);
+                mImageBtnOn.setVisibility(View.GONE);
+                isSwitching = false;
+                mSwitchAnimationFadeOut.setAnimationListener(null);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+    }
+
+    @OnClick(R.id.switch_off)
+    public void switchOff(View view) {
+        if (isSwitching) return;
+        MediaPlayerUtils.getInstance().playSwitchSound(this);
+        isSwitching = true;
+        mImageBtnOff.startAnimation(mSwitchAnimationFadeOut);
+        mImageBtnOn.startAnimation(mSwitchAnimationFadeIn);
+        mSwitchAnimationFadeOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                mImageBtnOff.setVisibility(View.GONE);
+                mImageBtnOn.setVisibility(View.VISIBLE);
+                isSwitching = false;
+                mSwitchAnimationFadeOut.setAnimationListener(null);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
     }
 
     private void updateUserStrategyChooser() {

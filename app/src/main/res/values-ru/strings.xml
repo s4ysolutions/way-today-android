@@ -13,4 +13,9 @@
     <string name="freq_sec_5">5 секунд</string>
     <string name="freq_sec_1">1 секунда</string>
     <string name="off">Выключено</string>
+    <string name="status_tracking">Tracking status</string>
+    <string name="status_gps">TODO</string>
+    <string name="status_upload">TODO</string>
+    <string name="trackid">Код:</string>
+    <string name="show_on_map">Показать на карте</string>
 </resources>
