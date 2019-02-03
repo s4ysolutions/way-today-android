@@ -1,24 +1,28 @@
 package solutions.s4y.waytoday;
 
 import android.os.Bundle;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.TextView;
 
 import javax.inject.Inject;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GestureDetectorCompat;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnTouch;
 import io.reactivex.disposables.CompositeDisposable;
 import solutions.s4y.waytoday.errors.ErrorsObservable;
-import solutions.s4y.waytoday.preferences.PreferenceIsTracking;
-import solutions.s4y.waytoday.strategies.UserStrategy;
+import solutions.s4y.waytoday.mainactivity.FrequencyGestureListener;
+import solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency;
 
 public class MainActivity extends AppCompatActivity {
+    private final static String LT = AppCompatActivity.class.getSimpleName();
     @Inject
-    UserStrategy mUserStrategy;
-    @Inject
-    PreferenceIsTracking mIsTracking;
+    PreferenceUpdateFrequency mUserStrategyFrequency;
 
     @BindView(R.id.title_current)
     TextView mTextViewTitleCurrent;
@@ -36,8 +40,14 @@ public class MainActivity extends AppCompatActivity {
     TextView mTextViewTitleNext3;
     @BindView(R.id.row_current)
     View mViewRowCurrent;
+    @BindView(R.id.gesture_controller)
+    ViewGroup mViewGestureController;
+
+    @BindView(R.id.text_status)
+    TextView mTextViewStatus;
 
     private CompositeDisposable resumeDisposables;
+    private GestureDetectorCompat mDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +55,14 @@ public class MainActivity extends AppCompatActivity {
         ((WTApplication) getApplication()).getAppComponent().inject(this);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        mTextViewTitlePrev3.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitlePrev2.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitlePrev1.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitleNext1.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitleNext2.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitleNext3.setTag(R.id.TAG_IS_TITLE, true);
+        mDetector = new GestureDetectorCompat(this,
+                new FrequencyGestureListener(mViewGestureController, mUserStrategyFrequency));
     }
 
     @Override
@@ -56,8 +74,8 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         resumeDisposables = new CompositeDisposable();
-        resumeDisposables.add(mUserStrategy
-                .observable
+        resumeDisposables.add(mUserStrategyFrequency
+                .subject
                 .subscribe(userStrategy -> updateUserStrategyChooser()));
         updateUserStrategyChooser();
     }
@@ -73,33 +91,30 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
     }
 
+    @OnTouch(R.id.gesture_controller)
+    public boolean detectGesture(MotionEvent event) {
+        if (mDetector.onTouchEvent(event)) {
+            if (BuildConfig.DEBUG) {
+                Log.d(LT, "R.id.gesture_controller OnTouch gesture detected");
+            }
+            return true;
+        }
+        if (BuildConfig.DEBUG) {
+            Log.d(LT, "R.id.gesture_controller OnTouch gesture not detected");
+        }
+        return super.onTouchEvent(event);
+    }
+
     private void updateUserStrategyChooser() {
+        PreferenceUpdateFrequency.Frequencies current =
+                mUserStrategyFrequency.get();
 
-        UserStrategy.UpdateFrequency currentFreq;
-        currentFreq = mIsTracking.get() ? null : mUserStrategy.current();
-        mTextViewTitleCurrent.setText(
-                currentFreq == null
-                        ? getString(R.string.off)
-                        : UserStrategy.title(this, currentFreq));
-
-        UserStrategy.UpdateFrequency freq;
-// prevs
-        freq = UserStrategy.getPrev(currentFreq);
-        mTextViewTitlePrev1.setText(freq == null ? "" : UserStrategy.title(this, freq));
-
-        freq = UserStrategy.getPrev(freq);
-        mTextViewTitlePrev2.setText(freq == null ? "" : UserStrategy.title(this, freq));
-
-        freq = UserStrategy.getPrev(freq);
-        mTextViewTitlePrev3.setText(freq == null ? "" : UserStrategy.title(this, freq));
-// nexts
-        freq = UserStrategy.getNext(currentFreq);
-        mTextViewTitleNext1.setText(freq == null ? "" : UserStrategy.title(this, freq));
-
-        freq = UserStrategy.getNext(freq);
-        mTextViewTitleNext2.setText(freq == null ? "" : UserStrategy.title(this, freq));
-
-        freq = UserStrategy.getNext(freq);
-        mTextViewTitleNext3.setText(freq == null ? "" : UserStrategy.title(this, freq));
+        mTextViewTitlePrev3.setText(current.getTitleResID(-3));
+        mTextViewTitlePrev2.setText(current.getTitleResID(-2));
+        mTextViewTitlePrev1.setText(current.getTitleResID(-1));
+        mTextViewTitleCurrent.setText(current.getTitleResID());
+        mTextViewTitleNext1.setText(current.getTitleResID(1));
+        mTextViewTitleNext2.setText(current.getTitleResID(2));
+        mTextViewTitleNext3.setText(current.getTitleResID(3));
     }
 }
