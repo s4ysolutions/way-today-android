@@ -27,7 +27,7 @@ public class AppNotification {
                         .setContentTitle(context.getResources().getString(R.string.app_name))
                         .setContentText("")
                         .setTicker(null)
-                        .setSmallIcon(R.drawable.pin);
+                        .setSmallIcon(context.getApplicationInfo().icon);
     }
 
     private void createNotificationChannel() {
