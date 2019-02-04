@@ -1,11 +1,11 @@
 package solutions.s4y.waytoday.permissions;
 
 public class PermissionRequest {
-    private final RestartOnGivenPermssion restarter;
-    private final String[] permissions;
+    public final RestartOnGivenPermssion restarter;
+    public final String permission;
 
-    public PermissionRequest(String[] permissions, RestartOnGivenPermssion restarter) {
-        this.permissions = permissions;
+    PermissionRequest(String permissions, RestartOnGivenPermssion restarter) {
+        this.permission = permissions;
         this.restarter = restarter;
     }
 }
