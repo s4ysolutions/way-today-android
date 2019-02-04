@@ -32,4 +32,12 @@ public class DaggerPreferencesModule {
     PreferenceUpdateFrequency provideUserStrategyUpdateFrequency(SharedPreferences sp) {
         return new PreferenceUpdateFrequency(sp);
     }
+
+
+    @Provides
+    @Singleton
+    PreferenceIsTracking providePreferenceIsActive(SharedPreferences sp) {
+        return new PreferenceIsTracking(sp);
+    }
+
 }
