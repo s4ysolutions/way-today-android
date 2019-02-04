@@ -1,9 +1,10 @@
-package solutions.s4y.waytoday.locations;
+package solutions.s4y.waytoday.background;
 
 import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
@@ -11,36 +12,31 @@ import android.os.IBinder;
 import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.subjects.PublishSubject;
-import solutions.s4y.waytoday.BuildConfig;
+import io.reactivex.disposables.CompositeDisposable;
+import solutions.s4y.waytoday.MainActivity;
 import solutions.s4y.waytoday.WTApplication;
-import solutions.s4y.waytoday.errors.ErrorsObservable;
-import solutions.s4y.waytoday.preferences.PreferenceTrackID;
-import solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency;
+import solutions.s4y.waytoday.locations.LocationUpdatesListener;
+import solutions.s4y.waytoday.locations.LocationsGPSUpdater;
+import solutions.s4y.waytoday.locations.LocationsUpdater;
+import solutions.s4y.waytoday.preferences.PreferenceIsTracking;
 import solutions.s4y.waytoday.strategies.RTStrategy;
 import solutions.s4y.waytoday.strategies.Strategy;
 
 import static solutions.s4y.waytoday.notifications.AppNotification.FOREGROUND_NOTIFICATION_ID;
-import static solutions.s4y.waytoday.upload.UploadService.enqueueUploadLocation;
+import static solutions.s4y.waytoday.upload.UploadJobService.enqueueUploadLocation;
 
-public class LocationsService extends Service {
-    static public final PublishSubject<Boolean> subjectTracking = PublishSubject.create();
+public class BackgroundService extends Service {
     static public final String FLAG_FOREGROUND = "ffg";
     static public Strategy currentStrategy = new RTStrategy();
-    @Inject
-    PreferenceUpdateFrequency mUpdateFrequency;
-    @Inject
-    PreferenceTrackID mTrackID;
-
     private LocationsUpdater gpsLocatonUpdater;
-    private Disposable mLocationsObservable;
+    @Inject
+    PreferenceIsTracking mIsTracking;
     private boolean mForeground;
-    private boolean mStarted;
+    private CompositeDisposable mServiceDisposables;
 
     public static void startService(Context context, boolean foreground) {
-        Intent intent = new Intent(context, LocationsService.class);
-        intent.putExtra(LocationsService.FLAG_FOREGROUND, foreground);
+        Intent intent = new Intent(context, BackgroundService.class);
+        intent.putExtra(BackgroundService.FLAG_FOREGROUND, foreground);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent);
         } else {
@@ -53,14 +49,20 @@ public class LocationsService extends Service {
         super.onCreate();
         ((WTApplication) getApplication()).getAppComponent().inject(this);
         gpsLocatonUpdater = new LocationsGPSUpdater(this);
+        mServiceDisposables = new CompositeDisposable();
+        mServiceDisposables.add(
+                LocationUpdatesListener
+                        .subjectLocations
+                        .subscribe(this::onLocation));
+        if (mIsTracking.isOn()) {
+            start(!MainActivity.sHasFocus);
+        }
     }
 
     @Override
     public void onDestroy() {
-        if (mLocationsObservable != null) {
-            ErrorsObservable
-                    .notify(new Exception("mLocationsObservable != null"), BuildConfig.DEBUG);
-        }
+        mServiceDisposables.clear();
+        LocationUpdatesListener.stop();
         super.onDestroy();
     }
 
@@ -70,15 +72,6 @@ public class LocationsService extends Service {
         return new LocationsServiceBinder();
     }
 
-    void startUpdateLocations() {
-        if (mLocationsObservable != null) {
-            ErrorsObservable.notify(new Exception("mLocationsObservable != null"), BuildConfig.DEBUG);
-        }
-        mLocationsObservable = LocationsObservable
-                .fromUpdater(gpsLocatonUpdater, currentStrategy)
-                .subscribe(location -> enqueueUploadLocation(this, location));
-        subjectTracking.onNext(isUpdatingLocation());
-    }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -90,26 +83,28 @@ public class LocationsService extends Service {
         return START_STICKY;
     }
 
-    void stopUpdateLocations() {
-        if (mLocationsObservable != null) {
-            mLocationsObservable.dispose();
-            mLocationsObservable = null;
-        } else {
-            ErrorsObservable.notify(new Exception("mLocationsObservable == null"), BuildConfig.DEBUG);
-        }
-        subjectTracking.onNext(isUpdatingLocation());
+    void startUpdateLocations() {
+        LocationUpdatesListener.requestStart(gpsLocatonUpdater, currentStrategy);
     }
 
-    public boolean isUpdatingLocation() {
-        return mLocationsObservable != null;
+    void stopUpdateLocations() {
+        LocationUpdatesListener.stop();
+    }
+
+    void onLocation(Location location) {
+        enqueueUploadLocation(this, location);
     }
 
     public void removeFromForeground() {
+        if (!mForeground)
+            return;
         stopForeground(true);
         mForeground = false;
     }
 
-    void putInForeground() {
+    public void putInForeground() {
+        if (mForeground)
+            return;
         Notification notification =
                 ((WTApplication) getApplication())
                         .getAppNotification()
@@ -119,26 +114,24 @@ public class LocationsService extends Service {
     }
 
     public void stop() {
-        mStarted = false;
-        if (isUpdatingLocation()) stopUpdateLocations();
+        stopUpdateLocations();
         removeFromForeground();
         stopSelf();
     }
 
     public void start(boolean foreground) {
-        mStarted = true;
         if (foreground && !mForeground) {
             putInForeground();
         } else if (!foreground && mForeground) {
             removeFromForeground();
         }
-        if (!isUpdatingLocation()) startUpdateLocations();
+        startUpdateLocations();
     }
 
     public class LocationsServiceBinder extends Binder {
         @NonNull
-        public LocationsService getService() {
-            return LocationsService.this;
+        public BackgroundService getService() {
+            return BackgroundService.this;
         }
     }
 }

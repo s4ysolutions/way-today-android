@@ -18,11 +18,11 @@
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
         <service
-            android:name=".upload.UploadService"
+            android:name=".upload.UploadJobService"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />
         <service
-            android:name=".locations.LocationsService"
+            android:name=".background.BackgroundService"
             android:enabled="true"
             android:exported="false" />
 

@@ -32,7 +32,7 @@ import solutions.s4y.waytoday.utils.Bear;
 import static java.util.UUID.randomUUID;
 import static solutions.s4y.waytoday.utils.FConv.i;
 
-public class UploadService extends JobIntentService {
+public class UploadJobService extends JobIntentService {
     private static final LinkedList<Location> uploadQueue = new LinkedList<>();
     private final static int MAX_LOCATIONS_MEMORY = 500;
     private final static int PACK_SIZE = 16;
@@ -51,8 +51,8 @@ public class UploadService extends JobIntentService {
 
     public static void enqueueUploadLocations(Context context) {
         RetryUploadAlarm.cancelRetryUploadAlarmmanager(context);
-        Intent intent = new Intent(context, UploadService.class);
-        enqueueWork(context, UploadService.class, 1000, intent);
+        Intent intent = new Intent(context, UploadJobService.class);
+        enqueueWork(context, UploadJobService.class, 1000, intent);
     }
 
     @Override

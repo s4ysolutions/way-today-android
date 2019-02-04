@@ -14,7 +14,7 @@ class RetryUploadAlarm {
     private static BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            UploadService.enqueueUploadLocations(context);
+            UploadJobService.enqueueUploadLocations(context);
         }
     };
 
@@ -23,7 +23,7 @@ class RetryUploadAlarm {
             cancelRetryUploadAlarmmanager(context);
         }
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(context, UploadService.class);
+        Intent intent = new Intent(context, UploadJobService.class);
         intent.putExtra(ACTOIN_REASON_BY_ALARM, true);
 
         IntentFilter filter = new IntentFilter();

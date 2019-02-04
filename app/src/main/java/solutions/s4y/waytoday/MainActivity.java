@@ -1,12 +1,17 @@
 package solutions.s4y.waytoday;
 
+import android.Manifest;
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,15 +24,19 @@ import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.view.GestureDetectorCompat;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnTouch;
 import io.reactivex.disposables.CompositeDisposable;
+import solutions.s4y.waytoday.background.BackgroundService;
 import solutions.s4y.waytoday.errors.ErrorsObservable;
-import solutions.s4y.waytoday.locations.LocationsService;
+import solutions.s4y.waytoday.locations.LocationUpdatesListener;
 import solutions.s4y.waytoday.mainactivity.FrequencyGestureListener;
+import solutions.s4y.waytoday.permissions.PermissionRequest;
+import solutions.s4y.waytoday.permissions.PermissionRequestObservable;
 import solutions.s4y.waytoday.preferences.PreferenceIsTracking;
 import solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency;
 import solutions.s4y.waytoday.sound.MediaPlayerUtils;
@@ -36,7 +45,9 @@ public class MainActivity extends AppCompatActivity {
     private final static String LT = AppCompatActivity.class.getSimpleName();
     @Inject
     PreferenceUpdateFrequency mUserStrategyFrequency;
-    static boolean mHasFocus = false;
+    public static boolean sHasFocus = false;
+    @Inject
+    PreferenceIsTracking mIsActive;
 
     @BindView(R.id.title_current)
     TextView mTextViewTitleCurrent;
@@ -60,10 +71,12 @@ public class MainActivity extends AppCompatActivity {
     ImageView mImageBtnOn;
     @BindView(R.id.switch_off)
     ImageView mImageBtnOff;
-    @Inject
-    PreferenceIsTracking mIsActive;
     @BindView(R.id.status_tracking_off)
     ImageView mLedTrackingOff;
+    @BindView(R.id.status_tracking)
+    ImageView mLedTrackingUnknown;
+    @BindView(R.id.status_tracking_suspended)
+    ImageView mLedTrackingSuspended;
     @BindView(R.id.status_tracking_on)
     ImageView mLedTrackingOn;
 
@@ -72,25 +85,8 @@ public class MainActivity extends AppCompatActivity {
     private Animation mSwitchAnimationFadeOut;
     private Animation mSwitchAnimationFadeIn;
     private boolean isSwitching;
-    @BindView(R.id.status_tracking)
-    ImageView mLedTracking;
-    private LocationsService mLocationsService;
-    @NonNull
-    private ServiceConnection mServiceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className,
-                                       @NonNull IBinder binder) {
-            mLocationsService = ((LocationsService.LocationsServiceBinder) binder).getService();
-            mLocationsService.removeFromForeground();
-            updateLedTrackingUpdating();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            mLocationsService = null;
-            updateLedTrackingUpdating();
-        }
-    };
+    SparseArray<PermissionRequest> mPermissionRequests = new SparseArray<>(2);
+    private BackgroundService mBackgroundService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,10 +106,30 @@ public class MainActivity extends AppCompatActivity {
         mSwitchAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout);
     }
 
+    @NonNull
+    private ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName className,
+                                       @NonNull IBinder binder) {
+            mBackgroundService = ((BackgroundService.LocationsServiceBinder) binder).getService();
+            if (sHasFocus)
+                mBackgroundService.removeFromForeground();
+            else
+                mBackgroundService.putInForeground();
+            updateLedUpload();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName arg0) {
+            mBackgroundService = null;
+            updateLedUpload();
+        }
+    };
+
     @Override
     protected void onResume() {
         super.onResume();
-        Intent intent = new Intent(this, LocationsService.class);
+        Intent intent = new Intent(this, BackgroundService.class);
         bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
 
         if (BuildConfig.DEBUG) {
@@ -128,12 +144,15 @@ public class MainActivity extends AppCompatActivity {
         resumeDisposables.add(mIsActive
                 .subject
                 .subscribe(userStrategy -> updateSwitch()));
-        resumeDisposables.add(LocationsService
-                .subjectTracking
-                .subscribe(active -> updateLedTrackingUpdating()));
+        resumeDisposables.add(LocationUpdatesListener
+                .subjectTrackingState
+                .subscribe(state -> updateLedUpload()));
+        resumeDisposables.add(PermissionRequestObservable
+                .subject
+                .subscribe(this::onPermissionRequest));
         updateUserStrategyChooser();
         updateSwitch();
-        updateLedTrackingUpdating();
+        updateLedUpload();
     }
 
     @Override
@@ -145,20 +164,12 @@ public class MainActivity extends AppCompatActivity {
             resumeDisposables = null;
         }
         if (mIsActive.isOn()) {
-            LocationsService.startService(this, true);
+            BackgroundService.startService(this, true);
         }
-        if (mLocationsService != null) {
+        if (mBackgroundService != null) {
             unbindService(mServiceConnection);
         }
         super.onPause();
-    }
-
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (hasFocus != mHasFocus) {
-            mHasFocus = hasFocus;
-        }
     }
 
     @OnTouch(R.id.gesture_controller)
@@ -254,33 +265,102 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void updateLedTrackingUpdating() {
-        if (mLocationsService == null) {
-            mLedTracking.setVisibility(View.VISIBLE);
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus != sHasFocus) {
+            sHasFocus = hasFocus;
+        }
+        if (mBackgroundService != null) {
+            if (sHasFocus)
+                mBackgroundService.removeFromForeground();
+            else
+                mBackgroundService.putInForeground();
+        }
+    }
+
+    private void updateLedUpload() {
+        if (BuildConfig.DEBUG) {
+            Log.d(LT,
+                    String.format("updateLedUpload: mBackgroundService=%b, isUpdating=%b, isSuspended=%b",
+                            mBackgroundService != null,
+                            LocationUpdatesListener.isUpdating,
+                            LocationUpdatesListener.isSuspended
+                    ));
+        }
+        if (mBackgroundService == null) {
             mLedTrackingOff.setVisibility(View.GONE);
+            mLedTrackingUnknown.setVisibility(View.VISIBLE);
+            mLedTrackingSuspended.setVisibility(View.GONE);
             mLedTrackingOn.setVisibility(View.GONE);
         } else {
-            if (mLocationsService.isUpdatingLocation()) {
-                mLedTracking.setVisibility(View.GONE);
-                mLedTrackingOff.setVisibility(View.GONE);
-                mLedTrackingOn.setVisibility(View.VISIBLE);
+            if (LocationUpdatesListener.isUpdating) {
+                if (LocationUpdatesListener.isSuspended) {
+                    mLedTrackingOff.setVisibility(View.GONE);
+                    mLedTrackingUnknown.setVisibility(View.GONE);
+                    mLedTrackingSuspended.setVisibility(View.VISIBLE);
+                    mLedTrackingOn.setVisibility(View.GONE);
+                } else {
+                    mLedTrackingOff.setVisibility(View.GONE);
+                    mLedTrackingUnknown.setVisibility(View.GONE);
+                    mLedTrackingSuspended.setVisibility(View.GONE);
+                    mLedTrackingOn.setVisibility(View.VISIBLE);
+                }
             } else {
-                mLedTracking.setVisibility(View.GONE);
                 mLedTrackingOff.setVisibility(View.VISIBLE);
+                mLedTrackingUnknown.setVisibility(View.GONE);
+                mLedTrackingSuspended.setVisibility(View.GONE);
                 mLedTrackingOn.setVisibility(View.GONE);
             }
         }
     }
 
     private void startService() {
-        if (mLocationsService != null) {
-            mLocationsService.start(false);
+        if (mBackgroundService != null) {
+            mBackgroundService.start(false);
         }
     }
 
     private void stopService() {
-        if (mLocationsService != null) {
-            mLocationsService.stop();
+        if (mBackgroundService != null) {
+            mBackgroundService.stop();
+        }
+    }
+
+    private void onPermissionRequest(PermissionRequest request) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (checkSelfPermission(request.permission) != PackageManager.PERMISSION_GRANTED) {
+                if (shouldShowRequestPermissionRationale(request.permission)) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setMessage(R.string.request_location_permission)
+                            .setTitle(R.string.request_permission_title)
+                            .setPositiveButton(android.R.string.ok,
+                                    (dialog, which) -> {
+                                        int code = (int) Math.round(Math.random() * 1000);
+                                        requestPermissions(new String[]{request.permission}, code);
+                                    })
+                            .setNegativeButton(android.R.string.cancel, (dialog, which) -> dialog.cancel())
+                            .show();
+                } else {
+                    // isScanRequestAbortedBecauseOfPermission=true;
+                    int code = (int) Math.round(Math.random() * 1000);
+                    ActivityCompat.requestPermissions(
+                            this,
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, code);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        PermissionRequest request = (mPermissionRequests.get(requestCode, null));
+        if (request != null) {
+            mPermissionRequests.delete(requestCode);
+            request.restarter.restart();
         }
     }
 }
