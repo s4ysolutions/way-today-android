@@ -12,6 +12,7 @@ import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.subjects.PublishSubject;
 import solutions.s4y.waytoday.BuildConfig;
 import solutions.s4y.waytoday.WTApplication;
 import solutions.s4y.waytoday.errors.ErrorsObservable;
@@ -24,6 +25,7 @@ import static solutions.s4y.waytoday.notifications.AppNotification.FOREGROUND_NO
 import static solutions.s4y.waytoday.upload.UploadService.enqueueUploadLocation;
 
 public class LocationsService extends Service {
+    static public final PublishSubject<Boolean> subjectTracking = PublishSubject.create();
     static public final String FLAG_FOREGROUND = "ffg";
     static public Strategy currentStrategy = new RTStrategy();
     @Inject
@@ -36,9 +38,9 @@ public class LocationsService extends Service {
     private boolean mForeground;
     private boolean mStarted;
 
-    public static void startService(Context context) {
+    public static void startService(Context context, boolean foreground) {
         Intent intent = new Intent(context, LocationsService.class);
-        intent.putExtra(LocationsService.FLAG_FOREGROUND, true);
+        intent.putExtra(LocationsService.FLAG_FOREGROUND, foreground);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             context.startForegroundService(intent);
         } else {
@@ -65,12 +67,17 @@ public class LocationsService extends Service {
     @NonNull
     @Override
     public IBinder onBind(Intent intent) {
-        return new Binder() {
-            @NonNull
-            LocationsService getService() {
-                return LocationsService.this;
-            }
-        };
+        return new LocationsServiceBinder();
+    }
+
+    void startUpdateLocations() {
+        if (mLocationsObservable != null) {
+            ErrorsObservable.notify(new Exception("mLocationsObservable != null"), BuildConfig.DEBUG);
+        }
+        mLocationsObservable = LocationsObservable
+                .fromUpdater(gpsLocatonUpdater, currentStrategy)
+                .subscribe(location -> enqueueUploadLocation(this, location));
+        subjectTracking.onNext(isUpdatingLocation());
     }
 
     @Override
@@ -83,15 +90,6 @@ public class LocationsService extends Service {
         return START_STICKY;
     }
 
-    void startUpdateLocations() {
-        if (mLocationsObservable != null) {
-            ErrorsObservable.notify(new Exception("mLocationsObservable != null"), BuildConfig.DEBUG);
-        }
-        mLocationsObservable = LocationsObservable
-                .fromUpdater(gpsLocatonUpdater, currentStrategy)
-                .subscribe(location -> enqueueUploadLocation(this, location));
-    }
-
     void stopUpdateLocations() {
         if (mLocationsObservable != null) {
             mLocationsObservable.dispose();
@@ -99,10 +97,16 @@ public class LocationsService extends Service {
         } else {
             ErrorsObservable.notify(new Exception("mLocationsObservable == null"), BuildConfig.DEBUG);
         }
+        subjectTracking.onNext(isUpdatingLocation());
     }
 
-    boolean isUpdatingLocation() {
+    public boolean isUpdatingLocation() {
         return mLocationsObservable != null;
+    }
+
+    public void removeFromForeground() {
+        stopForeground(true);
+        mForeground = false;
     }
 
     void putInForeground() {
@@ -114,9 +118,11 @@ public class LocationsService extends Service {
         mForeground = true;
     }
 
-    void removeFromForeground() {
-        stopForeground(true);
-        mForeground = false;
+    public void stop() {
+        mStarted = false;
+        if (isUpdatingLocation()) stopUpdateLocations();
+        removeFromForeground();
+        stopSelf();
     }
 
     public void start(boolean foreground) {
@@ -129,9 +135,10 @@ public class LocationsService extends Service {
         if (!isUpdatingLocation()) startUpdateLocations();
     }
 
-    public void stop() {
-        mStarted = false;
-        if (isUpdatingLocation()) stopUpdateLocations();
-        removeFromForeground();
+    public class LocationsServiceBinder extends Binder {
+        @NonNull
+        public LocationsService getService() {
+            return LocationsService.this;
+        }
     }
 }
