@@ -11,7 +11,7 @@
     <LinearLayout
         android:id="@+id/gesture_controller"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:orientation="horizontal"
         android:paddingTop="4dp"
         android:paddingBottom="4dp">
@@ -180,38 +180,51 @@
             android:gravity="center_horizontal"
             android:orientation="vertical">
 
+            <View
+                android:id="@+id/divider"
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="?android:attr/listDivider" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:layout_marginBottom="4dp"
                 android:gravity="center_horizontal"
-                android:orientation="vertical">
+                android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/textView3"
-                    android:layout_width="match_parent"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:gravity="center_horizontal"
+                    android:layout_weight="1"
+                    android:gravity="right"
+                    android:paddingRight="8sp"
                     android:singleLine="true"
                     android:text="@string/trackid"
                     android:textSize="14sp" />
 
                 <TextView
                     android:id="@+id/textID"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:gravity="center_horizontal"
-                    android:text="efdfsdg"
+                    android:text="@string/empty"
                     android:textColor="@android:color/black"
-                    android:textSize="30sp" />
+                    android:textSize="36sp"
+                    android:textStyle="bold" />
+
+                <Space
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1" />
             </LinearLayout>
 
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="1"
-                android:paddingBottom="12dp">
+                android:layout_weight="1">
 
                 <ImageView
                     android:id="@+id/switch_off"
@@ -228,13 +241,15 @@
             </FrameLayout>
 
             <View
-                android:id="@+id/divider4"
+                android:id="@+id/divider3"
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
-                android:background="?android:attr/listDivider"
-                android:visibility="gone" />
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="8dp"
+                android:background="?android:attr/listDivider" />
 
         </LinearLayout>
+
 
 
         <FrameLayout
@@ -243,10 +258,11 @@
             android:layout_weight="1">
 
             <ImageView
-                android:id="@+id/imageView8"
+                android:id="@+id/btn_track_id"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_gravity="right|top"
+                android:layout_marginTop="6dp"
                 android:padding="8dp"
                 android:scaleType="fitStart"
                 app:srcCompat="@drawable/ic_refresh" />
@@ -291,13 +307,6 @@
             android:layout_weight="4"
             android:orientation="vertical">
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginBottom="8dp"
-                android:background="?android:attr/listDivider" />
-
-
             <LinearLayout
                 android:layout_width="160dp"
                 android:layout_height="wrap_content"
@@ -333,7 +342,7 @@
                     <ImageView
                         android:id="@+id/status_tracking_on"
                         android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:contentDescription="@string/status_tracking"
                         app:srcCompat="@drawable/led_rect_green" />
 
@@ -355,6 +364,15 @@
                         android:layout_height="wrap_content"
                         android:contentDescription="@string/status_gps"
                         app:srcCompat="@drawable/led_rect_off" />
+
+                    <ImageView
+                        android:id="@+id/status_gps_new"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:alpha="0"
+                        android:contentDescription="@string/status_gps"
+                        app:srcCompat="@drawable/led_rect_green" />
+
                 </FrameLayout>
 
                 <Space
