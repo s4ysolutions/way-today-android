@@ -310,6 +310,13 @@
                     android:layout_weight="2">
 
                     <ImageView
+                        android:id="@+id/status_tracking_off"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/status_tracking"
+                        app:srcCompat="@drawable/led_rect_off" />
+
+                    <ImageView
                         android:id="@+id/status_tracking"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -317,11 +324,11 @@
                         app:srcCompat="@drawable/led_rect_gray" />
 
                     <ImageView
-                        android:id="@+id/status_tracking_off"
+                        android:id="@+id/status_tracking_suspended"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:contentDescription="@string/status_tracking"
-                        app:srcCompat="@drawable/led_rect_off" />
+                        app:srcCompat="@drawable/led_rect_red" />
 
                     <ImageView
                         android:id="@+id/status_tracking_on"

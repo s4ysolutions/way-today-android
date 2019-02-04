@@ -18,4 +18,6 @@
     <string name="status_upload">TODO</string>
     <string name="trackid">Track ID:</string>
     <string name="show_on_map">Show on map</string>
+    <string name="request_permission_title">Permission request</string>
+    <string name="request_location_permission">Allow access to your position</string>
 </resources>
