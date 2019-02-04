@@ -15,7 +15,7 @@ import solutions.s4y.waytoday.strategies.Strategy;
 
 public class LocationsGPSUpdater implements LocationsUpdater {
     @VisibleForTesting
-    public LocationManager mLocationManager;
+    LocationManager mLocationManager;
 
     LocationsGPSUpdater(@NonNull Context context) {
         mLocationManager = (LocationManager) context
@@ -60,6 +60,8 @@ public class LocationsGPSUpdater implements LocationsUpdater {
                         mStrategy.getMinDistance(),
                         mLocationListener
                 );
+            } catch (IllegalArgumentException e) {
+                ErrorsObservable.toast(e);
             } catch (SecurityException e) {
                 ErrorsObservable.notify(e);
                 PermissionRequestObservable.onNext(
