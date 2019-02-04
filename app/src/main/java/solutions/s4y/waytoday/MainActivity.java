@@ -30,14 +30,17 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnTouch;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import solutions.s4y.waytoday.background.BackgroundService;
 import solutions.s4y.waytoday.errors.ErrorsObservable;
+import solutions.s4y.waytoday.idservice.IDService;
 import solutions.s4y.waytoday.locations.LocationUpdatesListener;
 import solutions.s4y.waytoday.mainactivity.FrequencyGestureListener;
 import solutions.s4y.waytoday.permissions.PermissionRequest;
 import solutions.s4y.waytoday.permissions.PermissionRequestObservable;
 import solutions.s4y.waytoday.preferences.PreferenceIsTracking;
+import solutions.s4y.waytoday.preferences.PreferenceTrackID;
 import solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency;
 import solutions.s4y.waytoday.sound.MediaPlayerUtils;
 
@@ -48,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
     public static boolean sHasFocus = false;
     @Inject
     PreferenceIsTracking mIsActive;
+    @Inject
+    PreferenceTrackID mTrackID;
 
     @BindView(R.id.title_current)
     TextView mTextViewTitleCurrent;
@@ -79,32 +84,22 @@ public class MainActivity extends AppCompatActivity {
     ImageView mLedTrackingSuspended;
     @BindView(R.id.status_tracking_on)
     ImageView mLedTrackingOn;
+    @BindView(R.id.textID)
+    TextView mTextID;
+    @BindView(R.id.btn_track_id)
+    ImageView mBtnTrackID;
+    @BindView(R.id.status_gps_new)
+    ImageView mLedGpsNew;
 
     private CompositeDisposable resumeDisposables;
     private GestureDetectorCompat mDetector;
     private Animation mSwitchAnimationFadeOut;
     private Animation mSwitchAnimationFadeIn;
+    private Animation mLedGpsNewAnimationFadeOut;
     private boolean isSwitching;
     SparseArray<PermissionRequest> mPermissionRequests = new SparseArray<>(2);
     private BackgroundService mBackgroundService;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        ((WTApplication) getApplication()).getAppComponent().inject(this);
-        setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
-        mTextViewTitlePrev3.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitlePrev2.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitlePrev1.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitleNext1.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitleNext2.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitleNext3.setTag(R.id.TAG_IS_TITLE, true);
-        mDetector = new GestureDetectorCompat(this,
-                new FrequencyGestureListener(mViewGestureController, mUserStrategyFrequency));
-        mSwitchAnimationFadeIn = AnimationUtils.loadAnimation(this, R.anim.fadein);
-        mSwitchAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout);
-    }
+    private boolean mLedGpsNewAnymated = false;
 
     @NonNull
     private ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -125,35 +120,23 @@ public class MainActivity extends AppCompatActivity {
             updateLedUpload();
         }
     };
+    private Animation.AnimationListener ledGpsNewAnimationListener = new Animation.AnimationListener() {
+        @Override
+        public void onAnimationStart(Animation animation) {
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Intent intent = new Intent(this, BackgroundService.class);
-        bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
-
-        if (BuildConfig.DEBUG) {
-            if (resumeDisposables != null) {
-                ErrorsObservable.notify(new Exception("resumeDisposables != null"));
-            }
         }
-        resumeDisposables = new CompositeDisposable();
-        resumeDisposables.add(mUserStrategyFrequency
-                .subject
-                .subscribe(userStrategy -> updateUserStrategyChooser()));
-        resumeDisposables.add(mIsActive
-                .subject
-                .subscribe(userStrategy -> updateSwitch()));
-        resumeDisposables.add(LocationUpdatesListener
-                .subjectTrackingState
-                .subscribe(state -> updateLedUpload()));
-        resumeDisposables.add(PermissionRequestObservable
-                .subject
-                .subscribe(this::onPermissionRequest));
-        updateUserStrategyChooser();
-        updateSwitch();
-        updateLedUpload();
-    }
+
+        @Override
+        public void onAnimationEnd(Animation animation) {
+            mLedGpsNewAnymated = false;
+            mLedGpsNew.setAlpha(0.0f);
+        }
+
+        @Override
+        public void onAnimationRepeat(Animation animation) {
+
+        }
+    };
 
     @Override
     protected void onPause() {
@@ -212,6 +195,74 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        ((WTApplication) getApplication()).getAppComponent().inject(this);
+        setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
+        mTextViewTitlePrev3.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitlePrev2.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitlePrev1.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitleNext1.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitleNext2.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitleNext3.setTag(R.id.TAG_IS_TITLE, true);
+        mDetector = new GestureDetectorCompat(this,
+                new FrequencyGestureListener(mViewGestureController, mUserStrategyFrequency));
+        mSwitchAnimationFadeIn = AnimationUtils.loadAnimation(this, R.anim.fadein400);
+        mSwitchAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout400);
+        mLedGpsNewAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout300);
+        mLedGpsNewAnimationFadeOut.setAnimationListener(ledGpsNewAnimationListener);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Intent intent = new Intent(this, BackgroundService.class);
+        bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
+
+        if (BuildConfig.DEBUG) {
+            if (resumeDisposables != null) {
+                ErrorsObservable.notify(new Exception("resumeDisposables != null"));
+            }
+        }
+        resumeDisposables = new CompositeDisposable();
+        resumeDisposables.add(mUserStrategyFrequency
+                .subject
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(userStrategy -> updateUserStrategyChooser()));
+        resumeDisposables.add(mIsActive
+                .subject
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(userStrategy -> updateSwitch()));
+        resumeDisposables.add(LocationUpdatesListener
+                .subjectTrackingState
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(state -> updateLedUpload()));
+        resumeDisposables.add(LocationUpdatesListener
+                .subjectLocations
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(state -> updateLedGpsNew()));
+        resumeDisposables.add(PermissionRequestObservable
+                .subject
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::onPermissionRequest));
+        resumeDisposables.add(mTrackID
+                .subject
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(trackID -> {
+                    updateTrackID();
+                    MediaPlayerUtils.getInstance().playTrackID(this);
+                }));
+        updateUserStrategyChooser();
+        updateSwitch();
+        updateLedUpload();
+        updateTrackID();
+        if ("".equals(mTrackID.get())) {
+            IDService.enqueueRetrieveId(this, "");
+        }
     }
 
     @OnClick(R.id.switch_off)
@@ -315,6 +366,31 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @OnClick(R.id.btn_track_id)
+    public void newTrackID(View view) {
+        mBtnTrackID.setAlpha(0.3f);
+        mTextID.setAlpha(0.3f);
+        IDService.enqueueRetrieveId(this, mTrackID.get());
+    }
+
+    private void updateTrackID() {
+        mBtnTrackID.setAlpha(0.9f);
+        mTextID.setAlpha(0.9f);
+        if ("".equals(mTrackID.get())) {
+            mTextID.setText(" ... ");
+        } else {
+            mTextID.setText(mTrackID.get());
+        }
+    }
+
+    private void updateLedGpsNew() {
+        if (mLedGpsNewAnymated)
+            return;
+        mLedGpsNewAnymated = true;
+        mLedGpsNew.setAlpha(1.0f);
+        mLedGpsNew.startAnimation(mLedGpsNewAnimationFadeOut);
+    }
+
     private void startService() {
         if (mBackgroundService != null) {
             mBackgroundService.start(false);
@@ -363,4 +439,5 @@ public class MainActivity extends AppCompatActivity {
             request.restarter.restart();
         }
     }
+
 }
