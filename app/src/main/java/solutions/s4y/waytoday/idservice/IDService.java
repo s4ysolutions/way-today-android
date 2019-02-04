@@ -82,7 +82,8 @@ public class IDService extends JobIntentService {
             try {
                 // intent service can be handle work few times
                 // without destory, te use the channel then
-                if (ch == null) ch = grpcChannelProvider.channel();
+                if (ch == null)
+                    ch = grpcChannelProvider.channel();
                 TrackerGrpc.TrackerBlockingStub grpcStub = getGrpcStub();
 
                 TrackerOuterClass.GenerateTrackerIDRequest req = TrackerOuterClass.
@@ -105,7 +106,9 @@ public class IDService extends JobIntentService {
     public void destoryGrpcChannel() {
         if (ch != null) {
             try {
-                ch.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+                ManagedChannel tmp = ch;
+                ch = null;
+                tmp.shutdown().awaitTermination(5, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

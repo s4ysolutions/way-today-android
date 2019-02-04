@@ -9,10 +9,6 @@ import solutions.s4y.waytoday.preferences.PreferenceGRPCPort;
 public class GRPCChannelProvider {
     private PreferenceGRPCHost host;
     private PreferenceGRPCPort port;
-    private ManagedChannel sChannel;
-    private @NonNull
-    String usedHost = "";
-    private int usedPort;
 
     GRPCChannelProvider(@NonNull PreferenceGRPCHost host, @NonNull PreferenceGRPCPort port) {
         this.host = host;
@@ -20,17 +16,9 @@ public class GRPCChannelProvider {
     }
 
     public ManagedChannel channel() {
-        if (!usedHost.equals(host.get()) || usedPort != port.get()) {
-            sChannel = null;
-        }
-        if (sChannel == null) {
-            usedPort = port.get();
-            usedHost = host.get();
-            sChannel = ManagedChannelBuilder
-                    .forAddress(host.get(), port.get())
-                    .usePlaintext(true)
-                    .build();
-        }
-        return sChannel;
+        return ManagedChannelBuilder
+                .forAddress(host.get(), port.get())
+                .usePlaintext(true)
+                .build();
     }
 }
