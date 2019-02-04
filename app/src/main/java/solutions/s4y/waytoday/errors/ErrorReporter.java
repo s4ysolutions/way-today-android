@@ -20,7 +20,7 @@ public class ErrorReporter { // for testing purpose
             }
             mToast =
                     err.hasResourceID()
-                            ? Toast.makeText(context, err.getMessage(), Toast.LENGTH_SHORT)
+                            ? Toast.makeText(context, err.resourceID, Toast.LENGTH_SHORT)
                             : Toast.makeText(context, err.getMessage(), Toast.LENGTH_SHORT);
             mToast.show();
         }

@@ -1,29 +1,24 @@
 package solutions.s4y.waytoday.errors;
 
 import io.reactivex.subjects.PublishSubject;
-import solutions.s4y.waytoday.BuildConfig;
 
 public class ErrorsObservable {
     static final public PublishSubject<ErrorNotification> subject = PublishSubject.create();
 
-    public static void notify(ErrorNotification errorNotification) {
+    private static void notify(ErrorNotification errorNotification) {
         subject.onNext(errorNotification);
     }
 
     public static void notify(Throwable throwable) {
-        subject.onNext(new ErrorNotification(throwable));
+        notify(new ErrorNotification(throwable));
     }
 
-    public static void notify(int resourceID, boolean toast) {
-        subject.onNext(new ErrorNotification(resourceID, true));
+    private static void notify(int resourceID) {
+        notify(new ErrorNotification(resourceID, true));
     }
 
     public static void notify(Throwable throwable, boolean toast) {
-        subject.onNext(new ErrorNotification(throwable, toast));
-    }
-
-    public static void notifyDev(Throwable throwable) {
-        subject.onNext(new ErrorNotification(throwable, BuildConfig.DEBUG));
+        notify(new ErrorNotification(throwable, toast));
     }
 
     public static void toast(Throwable throwable) {
@@ -31,7 +26,7 @@ public class ErrorsObservable {
     }
 
     public static void toast(int resourceID) {
-        notify(resourceID, true);
+        notify(resourceID);
     }
 
 }
