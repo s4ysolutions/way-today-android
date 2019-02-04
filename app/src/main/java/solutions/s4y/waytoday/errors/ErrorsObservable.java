@@ -21,6 +21,10 @@ public class ErrorsObservable {
         notify(new ErrorNotification(throwable, toast));
     }
 
+    public static void notify(String message, boolean toast) {
+        notify(new ErrorNotification(message, toast));
+    }
+
     public static void toast(Throwable throwable) {
         notify(throwable, true);
     }

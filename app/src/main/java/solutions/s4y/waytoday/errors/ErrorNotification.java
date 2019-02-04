@@ -27,6 +27,13 @@ public class ErrorNotification {
         this.resourceID = resourceID;
     }
 
+    ErrorNotification(String message, boolean toast) {
+        this.th = null;
+        this.message = message;
+        this.toast = toast;
+        this.resourceID = NO_RESOURCE_ID;
+    }
+
     boolean hasResourceID() {
         return resourceID != NO_RESOURCE_ID;
     }
