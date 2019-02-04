@@ -32,6 +32,7 @@ public class WTApplication extends Application {
     private AppComponent mAppComponent;
     @Inject
     ErrorReporter errorReporter;
+
     private CompositeDisposable appDisposables = new CompositeDisposable();
     private AppNotification mAppNotification;
 
