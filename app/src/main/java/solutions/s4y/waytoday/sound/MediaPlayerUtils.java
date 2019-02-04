@@ -33,11 +33,13 @@ public class MediaPlayerUtils implements MediaPlayer.OnPreparedListener {
     }
 
     private void stop() {
-        mPlayer.stop();
+        if (mPlayer.isPlaying()) {
+            mPlayer.stop();
+        }
         mPlayer.reset();
     }
 
-    public void playSwitchSound(Context context) {
+    private void play(Context context, String file) {
         stop();
         AudioManager am = (AudioManager) context.getSystemService(AUDIO_SERVICE);
 
@@ -47,7 +49,7 @@ public class MediaPlayerUtils implements MediaPlayer.OnPreparedListener {
             return;
         }
 
-        try (AssetFileDescriptor afd = context.getAssets().openFd("switch.mp3")) {
+        try (AssetFileDescriptor afd = context.getAssets().openFd(file)) {
             mPlayer.stop();
             mPlayer.reset();
             mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -59,5 +61,13 @@ public class MediaPlayerUtils implements MediaPlayer.OnPreparedListener {
         } catch (IOException e) {
             ErrorsObservable.notify(e, false);
         }
+    }
+
+    public void playSwitchSound(Context context) {
+        play(context, "switch.mp3");
+    }
+
+    public void playTrackID(Context context) {
+        play(context, "idok.wav");
     }
 }
