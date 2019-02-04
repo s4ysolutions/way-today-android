@@ -7,6 +7,7 @@ import android.location.LocationManager;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
+import solutions.s4y.waytoday.MainActivity;
 import solutions.s4y.waytoday.R;
 import solutions.s4y.waytoday.errors.ErrorsObservable;
 import solutions.s4y.waytoday.permissions.PermissionRequestObservable;
@@ -17,14 +18,18 @@ public class LocationsGPSUpdater implements LocationsUpdater {
     @VisibleForTesting
     LocationManager mLocationManager;
 
-    LocationsGPSUpdater(@NonNull Context context) {
+    public LocationsGPSUpdater(@NonNull Context context) {
         mLocationManager = (LocationManager) context
                 .getSystemService(Context.LOCATION_SERVICE);
     }
 
     @Override
-    public void requestLocationUpdates(@NonNull Strategy strategy, @NonNull LocationListener listener) {
-        new Restarter(strategy, listener).restart();
+    public void requestLocationUpdates(
+            @NonNull Strategy strategy,
+            @NonNull LocationListener locationListener,
+            @NonNull RequestUpdatesListener requestUpdatesListener
+    ) {
+        new Restarter(strategy, locationListener, requestUpdatesListener).restart();
     }
 
     @Override
@@ -41,16 +46,22 @@ public class LocationsGPSUpdater implements LocationsUpdater {
         final Strategy mStrategy;
         @NonNull
         final LocationListener mLocationListener;
+        @NonNull
+        final RequestUpdatesListener mRequestUpdatesListener;
 
-        Restarter(@NonNull Strategy mStrategy, @NonNull LocationListener mLocationListener) {
-            this.mStrategy = mStrategy;
-            this.mLocationListener = mLocationListener;
+        Restarter(@NonNull Strategy strategy,
+                  @NonNull LocationListener locationListener,
+                  @NonNull RequestUpdatesListener requestUpdatesListener) {
+            mStrategy = strategy;
+            mLocationListener = locationListener;
+            mRequestUpdatesListener = requestUpdatesListener;
         }
 
         @Override
         public void restart() {
             if (mLocationManager == null) {
                 ErrorsObservable.toast(R.string.no_location_manager);
+                mRequestUpdatesListener.onRequestResult(false);
                 return;
             }
             try {
@@ -60,15 +71,17 @@ public class LocationsGPSUpdater implements LocationsUpdater {
                         mStrategy.getMinDistance(),
                         mLocationListener
                 );
+                mRequestUpdatesListener.onRequestResult(true);
             } catch (IllegalArgumentException e) {
                 ErrorsObservable.toast(e);
+                mRequestUpdatesListener.onRequestResult(false);
             } catch (SecurityException e) {
-                ErrorsObservable.notify(e);
+                ErrorsObservable.notify(e, !MainActivity.sHasFocus);
                 PermissionRequestObservable.onNext(
-                        Manifest.permission.ACCESS_FINE_LOCATION,
                         Manifest.permission.ACCESS_COARSE_LOCATION,
                         this
                 );
+                mRequestUpdatesListener.onRequestResult(false);
             }
         }
     }
