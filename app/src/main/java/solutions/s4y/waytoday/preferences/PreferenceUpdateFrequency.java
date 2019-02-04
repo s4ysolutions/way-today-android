@@ -8,8 +8,6 @@ import solutions.s4y.waytoday.R;
 
 public class PreferenceUpdateFrequency extends BaseStringPreference {
     static final String key = "freq";
-    static private final String off = Frequencies.OFF.toString();
-
     PreferenceUpdateFrequency(@NonNull SharedPreferences preferences) {
         super(preferences, key, Frequencies.SEC1.toString());
     }
@@ -17,14 +15,6 @@ public class PreferenceUpdateFrequency extends BaseStringPreference {
     public Frequencies get() {
         String s = getBoxed();
         return Frequencies.valueOf(s);
-    }
-
-    public boolean isOn() {
-        return !off.equals(getBoxed());
-    }
-
-    public boolean isOff() {
-        return off.equals(getBoxed());
     }
 
     private void set(@NonNull Frequencies value) {
@@ -56,7 +46,7 @@ public class PreferenceUpdateFrequency extends BaseStringPreference {
     }
 
     public enum Frequencies {
-        OFF, SEC1, SEC5, SEC15, MIN1, MIN5, MIN15, MIN30, HOUR1;
+        SEC1, SEC5, SEC15, MIN1, MIN5, MIN15, MIN30, HOUR1;
 
         @Nullable
         public Frequencies getPrev() {
@@ -75,8 +65,6 @@ public class PreferenceUpdateFrequency extends BaseStringPreference {
                     return SEC5;
                 case SEC5:
                     return SEC1;
-                case SEC1:
-                    return OFF;
                 default:
                     return null;
             }
@@ -99,10 +87,8 @@ public class PreferenceUpdateFrequency extends BaseStringPreference {
                     return MIN1;
                 case SEC5:
                     return SEC15;
-                case SEC1:
-                    return SEC5;
                 default:
-                    return SEC1;
+                    return SEC5;
             }
         }
 
@@ -150,11 +136,8 @@ public class PreferenceUpdateFrequency extends BaseStringPreference {
                 case SEC5:
                     resid = R.string.freq_sec_5;
                     break;
-                case SEC1:
-                    resid = R.string.freq_sec_1;
-                    break;
                 default:
-                    resid = R.string.off;
+                    resid = R.string.freq_sec_1;
                     break;
             }
             return resid;
