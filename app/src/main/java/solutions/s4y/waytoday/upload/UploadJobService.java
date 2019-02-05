@@ -30,7 +30,6 @@ import solutions.s4y.waytoday.grpc.TrackerGrpc;
 import solutions.s4y.waytoday.grpc.TrackerOuterClass;
 import solutions.s4y.waytoday.preferences.PreferenceSound;
 import solutions.s4y.waytoday.preferences.PreferenceTrackID;
-import solutions.s4y.waytoday.sound.MediaPlayerUtils;
 import solutions.s4y.waytoday.utils.Bear;
 
 import static java.util.UUID.randomUUID;
@@ -215,7 +214,6 @@ public class UploadJobService extends JobIntentService {
     }
 
     public static void enqueueUploadLocations(Context context) {
-        RetryUploadAlarm.cancelRetryUploadAlarmmanager(context);
         Intent intent = new Intent(context, UploadJobService.class);
         enqueueWork(context, UploadJobService.class, 1000, intent);
     }
@@ -256,35 +254,29 @@ public class UploadJobService extends JobIntentService {
         if (sIsUploading) {
             ErrorsObservable.notify(new Error("UploadJobService re-entry"), BuildConfig.DEBUG);
         }
-        sIsError = false;
         sIsUploading = true;
+        if (uploadQueue.size() > 0) {
+            sIsError = false;
 
-        notifyUpdateState();
+            notifyUpdateState();
 
-        RetryUploadAlarm.cancelRetryUploadAlarmmanager(this);
-
-        boolean completed = false;
-        if (isConnected()) {
-            uploadStore();
-            completed = uploadQueue();
-        }
-        if (!completed) {
-            if (uploadQueue.size() > MAX_LOCATIONS_MEMORY) {
-                saveQueueToStore();
+            boolean completed = false;
+            if (isConnected()) {
+                uploadStore();
+                completed = uploadQueue();
             }
-            destoryGrpcChannel();
-            RetryUploadAlarm.startRetryUploadAlarmmanager(this);
-            sIsError = true;
+            if (!completed) {
+                if (uploadQueue.size() > MAX_LOCATIONS_MEMORY) {
+                    saveQueueToStore();
+                }
+                destoryGrpcChannel();
+                sIsError = true;
+            }
+            sIsUploading = false;
+            notifyUpdateState();
+        } else {
+            sIsUploading = false;
         }
-        sIsUploading = false;
-        notifyUpdateState();
-        if (mSound.isOn()) {
-            if (sIsError)
-                MediaPlayerUtils.getInstance().playUploadFail(this);
-            else
-                MediaPlayerUtils.getInstance().playUploadOk(this);
-        }
-
     }
 
 }

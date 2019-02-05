@@ -23,6 +23,7 @@ import solutions.s4y.waytoday.preferences.PreferenceSound;
 import solutions.s4y.waytoday.sound.MediaPlayerUtils;
 import solutions.s4y.waytoday.strategies.RTStrategy;
 import solutions.s4y.waytoday.strategies.Strategy;
+import solutions.s4y.waytoday.upload.UploadJobService;
 
 import static solutions.s4y.waytoday.notifications.AppNotification.FOREGROUND_NOTIFICATION_ID;
 import static solutions.s4y.waytoday.upload.UploadJobService.enqueueUploadLocation;
@@ -58,6 +59,10 @@ public class BackgroundService extends Service {
                 LocationUpdatesListener
                         .subjectLocations
                         .subscribe(this::onLocation));
+        mServiceDisposables.add(
+                UploadJobService
+                        .subjectStatus
+                        .subscribe(status -> handleUploadStatus()));
         if (mIsTracking.isOn()) {
             start(!MainActivity.sHasFocus);
         }
@@ -67,6 +72,7 @@ public class BackgroundService extends Service {
     public void onDestroy() {
         mServiceDisposables.clear();
         LocationUpdatesListener.stop();
+        RetryUploadAlarm.cancelRetryUploadAlarmmanager(this);
         super.onDestroy();
     }
 
@@ -96,6 +102,7 @@ public class BackgroundService extends Service {
     }
 
     void onLocation(Location location) {
+        RetryUploadAlarm.cancelRetryUploadAlarmmanager(this);
         enqueueUploadLocation(this, location);
         if (mSound.isOn()) {
             MediaPlayerUtils.getInstance().playGpsOk(this);
@@ -139,6 +146,22 @@ public class BackgroundService extends Service {
         @NonNull
         public BackgroundService getService() {
             return BackgroundService.this;
+        }
+    }
+
+    private void handleUploadStatus() {
+        UploadJobService.Status status = UploadJobService.uploadStatus();
+        if (mSound.isOn()) {
+            if (status == UploadJobService.Status.ERROR)
+                MediaPlayerUtils.getInstance().playUploadFail(this);
+            else if (status == UploadJobService.Status.EMPTY)
+                MediaPlayerUtils.getInstance().playUploadOk(this);
+        }
+        if (status == UploadJobService.Status.ERROR) {
+            RetryUploadAlarm.startRetryUploadAlarmmanager(this);
+        } else {
+            // should never be used but just in case
+            RetryUploadAlarm.cancelRetryUploadAlarmmanager(this);
         }
     }
 }
