@@ -18,6 +18,7 @@ public class MediaPlayerUtils implements MediaPlayer.OnPreparedListener {
     private MediaPlayerUtils() {
         mPlayer = new MediaPlayer();
         mPlayer.setOnPreparedListener(this);
+        mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
     }
 
     public static MediaPlayerUtils getInstance() {
@@ -50,10 +51,7 @@ public class MediaPlayerUtils implements MediaPlayer.OnPreparedListener {
         }
 
         try (AssetFileDescriptor afd = context.getAssets().openFd(file)) {
-            mPlayer.stop();
-            mPlayer.reset();
-            mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            mPlayer.reset();
+            stop();
             mPlayer.setLooping(false);
             mPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
             mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
