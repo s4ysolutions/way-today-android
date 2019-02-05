@@ -43,6 +43,9 @@ import solutions.s4y.waytoday.preferences.PreferenceIsTracking;
 import solutions.s4y.waytoday.preferences.PreferenceTrackID;
 import solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency;
 import solutions.s4y.waytoday.sound.MediaPlayerUtils;
+import solutions.s4y.waytoday.upload.UploadJobService;
+
+import static solutions.s4y.waytoday.upload.UploadJobService.uploadStatus;
 
 public class MainActivity extends AppCompatActivity {
     private final static String LT = AppCompatActivity.class.getSimpleName();
@@ -90,6 +93,14 @@ public class MainActivity extends AppCompatActivity {
     ImageView mBtnTrackID;
     @BindView(R.id.status_gps_new)
     ImageView mLedGpsNew;
+    @BindView(R.id.status_upload_empty)
+    ImageView mLedUploadEmpty;
+    @BindView(R.id.status_upload_queue)
+    ImageView mLedUploadQueue;
+    @BindView(R.id.status_upload_uploading)
+    ImageView mLedUploadUploading;
+    @BindView(R.id.status_upload_error)
+    ImageView mLedUploadError;
 
     private CompositeDisposable resumeDisposables;
     private GestureDetectorCompat mDetector;
@@ -111,13 +122,13 @@ public class MainActivity extends AppCompatActivity {
                 mBackgroundService.removeFromForeground();
             else
                 mBackgroundService.putInForeground();
-            updateLedUpload();
+            updateLedBackground();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
             mBackgroundService = null;
-            updateLedUpload();
+            updateLedBackground();
         }
     };
     private Animation.AnimationListener ledGpsNewAnimationListener = new Animation.AnimationListener() {
@@ -240,7 +251,7 @@ public class MainActivity extends AppCompatActivity {
         resumeDisposables.add(LocationUpdatesListener
                 .subjectTrackingState
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(state -> updateLedUpload()));
+                .subscribe(state -> updateLedBackground()));
         resumeDisposables.add(LocationUpdatesListener
                 .subjectLocations
                 .observeOn(AndroidSchedulers.mainThread())
@@ -249,6 +260,10 @@ public class MainActivity extends AppCompatActivity {
                 .subject
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(this::onPermissionRequest));
+        resumeDisposables.add(UploadJobService
+                .subjectStatus
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(status -> this.updateLedUploading()));
         resumeDisposables.add(mTrackID
                 .subject
                 .observeOn(AndroidSchedulers.mainThread())
@@ -258,8 +273,9 @@ public class MainActivity extends AppCompatActivity {
                 }));
         updateUserStrategyChooser();
         updateSwitch();
-        updateLedUpload();
+        updateLedBackground();
         updateTrackID();
+        updateLedUploading();
         if ("".equals(mTrackID.get())) {
             IDService.enqueueRetrieveId(this, "");
         }
@@ -330,10 +346,10 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void updateLedUpload() {
+    private void updateLedBackground() {
         if (BuildConfig.DEBUG) {
             Log.d(LT,
-                    String.format("updateLedUpload: mBackgroundService=%b, isUpdating=%b, isSuspended=%b",
+                    String.format("updateLedBackground: mBackgroundService=%b, isUpdating=%b, isSuspended=%b",
                             mBackgroundService != null,
                             LocationUpdatesListener.isUpdating,
                             LocationUpdatesListener.isSuspended
@@ -389,6 +405,35 @@ public class MainActivity extends AppCompatActivity {
         mLedGpsNewAnymated = true;
         mLedGpsNew.setAlpha(1.0f);
         mLedGpsNew.startAnimation(mLedGpsNewAnimationFadeOut);
+    }
+
+
+    private void updateLedUploading() {
+        switch (uploadStatus()) {
+            case QUEUED:
+                mLedUploadEmpty.setVisibility(View.GONE);
+                mLedUploadQueue.setVisibility(View.VISIBLE);
+                mLedUploadUploading.setVisibility(View.GONE);
+                mLedUploadError.setVisibility(View.GONE);
+                break;
+            case UPLOADING:
+                mLedUploadEmpty.setVisibility(View.GONE);
+                mLedUploadQueue.setVisibility(View.GONE);
+                mLedUploadUploading.setVisibility(View.VISIBLE);
+                mLedUploadError.setVisibility(View.GONE);
+                break;
+            case ERROR:
+                mLedUploadEmpty.setVisibility(View.GONE);
+                mLedUploadQueue.setVisibility(View.GONE);
+                mLedUploadUploading.setVisibility(View.GONE);
+                mLedUploadError.setVisibility(View.VISIBLE);
+                break;
+            default:
+                mLedUploadEmpty.setVisibility(View.VISIBLE);
+                mLedUploadQueue.setVisibility(View.GONE);
+                mLedUploadUploading.setVisibility(View.GONE);
+                mLedUploadError.setVisibility(View.GONE);
+        }
     }
 
     private void startService() {

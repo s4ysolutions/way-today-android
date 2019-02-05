@@ -19,6 +19,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import androidx.core.app.JobIntentService;
 import io.grpc.ManagedChannel;
+import io.reactivex.subjects.PublishSubject;
+import solutions.s4y.waytoday.BuildConfig;
 import solutions.s4y.waytoday.R;
 import solutions.s4y.waytoday.WTApplication;
 import solutions.s4y.waytoday.errors.ErrorsObservable;
@@ -33,6 +35,9 @@ import static java.util.UUID.randomUUID;
 import static solutions.s4y.waytoday.utils.FConv.i;
 
 public class UploadJobService extends JobIntentService {
+    public static final PublishSubject<Status> subjectStatus = PublishSubject.create();
+    private static Boolean sIsUploading = false;
+    private static Boolean sIsError = false;
     private static final LinkedList<Location> uploadQueue = new LinkedList<>();
     private final static int MAX_LOCATIONS_MEMORY = 500;
     private final static int PACK_SIZE = 16;
@@ -42,11 +47,18 @@ public class UploadJobService extends JobIntentService {
     @Inject
     PreferenceTrackID mTrackID;
 
-    public static void enqueueUploadLocation(Context context, Location location) {
+    public static Status uploadStatus() {
+        if (sIsError)
+            return Status.ERROR;
+        if (sIsUploading)
+            return Status.UPLOADING;
+        int size;
         synchronized (uploadQueue) {
-            uploadQueue.add(location);
+            size = uploadQueue.size();
         }
-        enqueueUploadLocations(context);
+        if (size > 0)
+            return Status.QUEUED;
+        return Status.EMPTY;
     }
 
     public static void enqueueUploadLocations(Context context) {
@@ -79,8 +91,24 @@ public class UploadJobService extends JobIntentService {
         super.onDestroy();
     }
 
+    public static void enqueueUploadLocation(Context context, Location location) {
+        synchronized (uploadQueue) {
+            uploadQueue.add(location);
+        }
+        subjectStatus.onNext(uploadStatus());
+        enqueueUploadLocations(context);
+    }
+
     @Override
     protected void onHandleWork(@NonNull Intent intent) {
+        if (sIsUploading) {
+            ErrorsObservable.notify(new Error("UploadJobService re-entry"), BuildConfig.DEBUG);
+        }
+        sIsError = false;
+        sIsUploading = true;
+
+        subjectStatus.onNext(uploadStatus());
+
         RetryUploadAlarm.cancelRetryUploadAlarmmanager(this);
 
         boolean completed = false;
@@ -94,19 +122,29 @@ public class UploadJobService extends JobIntentService {
             }
             destoryGrpcChannel();
             RetryUploadAlarm.startRetryUploadAlarmmanager(this);
+            sIsError = true;
         }
+        sIsUploading = false;
+        subjectStatus.onNext(uploadStatus());
     }
 
     private void uploadStore() {
+        // TODO: do not have store yet
     }
 
     private void saveQueueToStore() {
+        /*
+        TODO: while there's no persist store just remove
+        the oldest locations from the queue
+        */
         synchronized (uploadQueue) {
             while (uploadQueue.size() > MAX_LOCATIONS_MEMORY) {
                 uploadQueue.pollFirst();
             }
         }
     }
+
+    public enum Status {EMPTY, QUEUED, UPLOADING, ERROR}
 
     private boolean uploadQueue() {
         List<Location> pack = new ArrayList<>();

@@ -386,7 +386,28 @@
                     android:layout_weight="2">
 
                     <ImageView
-                        android:id="@+id/status_upload"
+                        android:id="@+id/status_upload_empty"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/status_upload"
+                        app:srcCompat="@drawable/led_rect_off" />
+
+                    <ImageView
+                        android:id="@+id/status_upload_queue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/status_upload"
+                        app:srcCompat="@drawable/led_rect_off" />
+
+                    <ImageView
+                        android:id="@+id/status_upload_uploading"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/status_upload"
+                        app:srcCompat="@drawable/led_rect_off" />
+
+                    <ImageView
+                        android:id="@+id/status_upload_error"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:contentDescription="@string/status_upload"
@@ -406,7 +427,6 @@
                     android:layout_weight="2">
 
                     <ImageView
-                        android:id="@+id/status_gps_off"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
