@@ -78,7 +78,7 @@ public class MediaPlayerUtils implements MediaPlayer.OnPreparedListener {
     }
 
     public void playUploadFail(Context context) {
-        play(context, "uploadfail.mmp3");
+        play(context, "uploadfail.mp3");
     }
 
 }
