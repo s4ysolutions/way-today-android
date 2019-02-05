@@ -33,11 +33,16 @@ public class DaggerPreferencesModule {
         return new PreferenceUpdateFrequency(sp);
     }
 
-
     @Provides
     @Singleton
     PreferenceIsTracking providePreferenceIsActive(SharedPreferences sp) {
         return new PreferenceIsTracking(sp);
+    }
+
+    @Provides
+    @Singleton
+    PreferenceSound providePreferenceSound(SharedPreferences sp) {
+        return new PreferenceSound(sp);
     }
 
 }

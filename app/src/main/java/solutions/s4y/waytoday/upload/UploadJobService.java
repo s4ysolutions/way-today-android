@@ -28,7 +28,9 @@ import solutions.s4y.waytoday.grpc.GRPCChannelProvider;
 import solutions.s4y.waytoday.grpc.LocationOuterClass;
 import solutions.s4y.waytoday.grpc.TrackerGrpc;
 import solutions.s4y.waytoday.grpc.TrackerOuterClass;
+import solutions.s4y.waytoday.preferences.PreferenceSound;
 import solutions.s4y.waytoday.preferences.PreferenceTrackID;
+import solutions.s4y.waytoday.sound.MediaPlayerUtils;
 import solutions.s4y.waytoday.utils.Bear;
 
 import static java.util.UUID.randomUUID;
@@ -48,6 +50,8 @@ public class UploadJobService extends JobIntentService {
     protected ManagedChannel ch = null;
     @Inject
     PreferenceTrackID mTrackID;
+    @Inject
+    PreferenceSound mSound;
 
     public static Status uploadStatus() {
         if (sIsError)
@@ -274,6 +278,13 @@ public class UploadJobService extends JobIntentService {
         }
         sIsUploading = false;
         notifyUpdateState();
+        if (mSound.isOn()) {
+            if (sIsError)
+                MediaPlayerUtils.getInstance().playUploadFail(this);
+            else
+                MediaPlayerUtils.getInstance().playUploadOk(this);
+        }
+
     }
 
 }

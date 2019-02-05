@@ -40,6 +40,7 @@ import solutions.s4y.waytoday.mainactivity.FrequencyGestureListener;
 import solutions.s4y.waytoday.permissions.PermissionRequest;
 import solutions.s4y.waytoday.permissions.PermissionRequestObservable;
 import solutions.s4y.waytoday.preferences.PreferenceIsTracking;
+import solutions.s4y.waytoday.preferences.PreferenceSound;
 import solutions.s4y.waytoday.preferences.PreferenceTrackID;
 import solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency;
 import solutions.s4y.waytoday.sound.MediaPlayerUtils;
@@ -56,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
     PreferenceIsTracking mIsActive;
     @Inject
     PreferenceTrackID mTrackID;
+    @Inject
+    PreferenceSound mSound;
 
     @BindView(R.id.title_current)
     TextView mTextViewTitleCurrent;
@@ -103,6 +106,10 @@ public class MainActivity extends AppCompatActivity {
     ImageView mLedUploadUploading;
     @BindView(R.id.status_upload_error)
     ImageView mLedUploadError;
+    @BindView(R.id.btn_sound_on)
+    ImageView mBtnSoundOn;
+    @BindView(R.id.btn_sound_off)
+    ImageView mBtnSoundOff;
 
     private CompositeDisposable resumeDisposables;
     private GestureDetectorCompat mDetector;
@@ -243,6 +250,7 @@ public class MainActivity extends AppCompatActivity {
         updateLedBackground();
         updateTrackID();
         updateLedUploading();
+        updateSound();
         if ("".equals(mTrackID.get())) {
             IDService.enqueueRetrieveId(this, "");
         }
@@ -476,6 +484,28 @@ public class MainActivity extends AppCompatActivity {
                     mLedUploadError.setVisibility(View.GONE);
                 }
         }
+    }
+
+    private void updateSound() {
+        if (mSound.isOn()) {
+            mBtnSoundOn.setVisibility(View.VISIBLE);
+            mBtnSoundOff.setVisibility(View.GONE);
+        } else {
+            mBtnSoundOff.setVisibility(View.VISIBLE);
+            mBtnSoundOn.setVisibility(View.GONE);
+        }
+    }
+
+    @OnClick(R.id.btn_sound_on)
+    void onSoundOnClick(View v) {
+        mSound.set(false);
+        updateSound();
+    }
+
+    @OnClick(R.id.btn_sound_off)
+    void onSoundOffClick(View v) {
+        mSound.set(true);
+        updateSound();
     }
 
     private void startService() {

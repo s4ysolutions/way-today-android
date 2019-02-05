@@ -68,4 +68,17 @@ public class MediaPlayerUtils implements MediaPlayer.OnPreparedListener {
     public void playTrackID(Context context) {
         play(context, "idok.wav");
     }
+
+    public void playGpsOk(Context context) {
+        play(context, "gpsok.wav");
+    }
+
+    public void playUploadOk(Context context) {
+        play(context, "uploadok.mp3");
+    }
+
+    public void playUploadFail(Context context) {
+        play(context, "uploadfail.mmp3");
+    }
+
 }
