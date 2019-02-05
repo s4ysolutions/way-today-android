@@ -457,14 +457,13 @@ public class MainActivity extends AppCompatActivity {
                 if (sUploading) {
                     fadeOutUploading();
                 } else {
-                    mLedUploadError.setVisibility(View.GONE);
                     mLedUploadQueue.setVisibility(View.VISIBLE);
                     mLedUploadError.setVisibility(View.GONE);
                 }
                 break;
             case UPLOADING:
-                mLedUploadUploading.setVisibility(View.VISIBLE);
                 mLedUploadQueue.setVisibility(View.GONE);
+                mLedUploadUploading.setVisibility(View.VISIBLE);
                 mLedUploadError.setVisibility(View.GONE);
                 sUploading = true;
                 break;

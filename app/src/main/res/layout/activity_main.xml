@@ -394,18 +394,18 @@
                         app:srcCompat="@drawable/led_rect_off" />
 
                     <ImageView
-                        android:id="@+id/status_upload_uploading"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:contentDescription="@string/status_upload"
-                        app:srcCompat="@drawable/led_rect_blue" />
-
-                    <ImageView
                         android:id="@+id/status_upload_queue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:contentDescription="@string/status_upload"
                         app:srcCompat="@drawable/led_rect_light_blue" />
+
+                    <ImageView
+                        android:id="@+id/status_upload_uploading"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/status_upload"
+                        app:srcCompat="@drawable/led_rect_blue" />
 
                     <ImageView
                         android:id="@+id/status_upload_error"
