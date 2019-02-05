@@ -359,7 +359,7 @@
                     android:layout_weight="2">
 
                     <ImageView
-                        android:id="@+id/status_gps"
+                        android:id="@+id/status_gps_wait"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:contentDescription="@string/status_gps"
@@ -371,6 +371,7 @@
                         android:layout_height="wrap_content"
                         android:alpha="0"
                         android:contentDescription="@string/status_gps"
+                        android:visibility="gone"
                         app:srcCompat="@drawable/led_rect_green" />
 
                 </FrameLayout>
@@ -393,83 +394,115 @@
                         app:srcCompat="@drawable/led_rect_off" />
 
                     <ImageView
-                        android:id="@+id/status_upload_queue"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:contentDescription="@string/status_upload"
-                        app:srcCompat="@drawable/led_rect_off" />
-
-                    <ImageView
                         android:id="@+id/status_upload_uploading"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:contentDescription="@string/status_upload"
-                        app:srcCompat="@drawable/led_rect_off" />
+                        app:srcCompat="@drawable/led_rect_blue" />
+
+                    <ImageView
+                        android:id="@+id/status_upload_queue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/status_upload"
+                        app:srcCompat="@drawable/led_rect_light_blue" />
 
                     <ImageView
                         android:id="@+id/status_upload_error"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:contentDescription="@string/status_upload"
-                        app:srcCompat="@drawable/led_rect_off" />
+                        app:srcCompat="@drawable/led_rect_red" />
                 </FrameLayout>
             </LinearLayout>
 
             <LinearLayout
-                android:layout_width="160dp"
-                android:layout_height="48dp"
-                android:layout_gravity="center_horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
                 <FrameLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="2">
+                    android:layout_weight="1">
 
                     <ImageView
+                        android:id="@+id/btn_sound_off"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        app:srcCompat="@drawable/ic_gps" />
+                        android:layout_height="match_parent"
+                        android:scaleType="center"
+                        android:visibility="visible"
+                        app:srcCompat="@drawable/ic_sound_off" />
+
+                    <ImageView
+                        android:id="@+id/btn_sound_on"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="center"
+                        app:srcCompat="@drawable/ic_sound_on" />
                 </FrameLayout>
 
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1" />
+                <LinearLayout
+                    android:layout_width="160dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center_horizontal"
+                    android:orientation="horizontal">
+
+                    <FrameLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="2">
+
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            app:srcCompat="@drawable/ic_gps" />
+                    </FrameLayout>
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1" />
+
+                    <FrameLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="2">
+
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:contentDescription="@string/status_gps"
+                            app:srcCompat="@drawable/ic_pin_stroke" />
+                    </FrameLayout>
+
+                    <Space
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1" />
+
+                    <FrameLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="2">
+
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_vertical"
+                            android:contentDescription="@string/status_upload"
+                            app:srcCompat="@drawable/ic_upload" />
+                    </FrameLayout>
+                </LinearLayout>
 
                 <FrameLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:layout_weight="2">
+                    android:layout_weight="1"></FrameLayout>
 
-                    <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:contentDescription="@string/status_gps"
-                        app:srcCompat="@drawable/ic_pin_stroke" />
-                </FrameLayout>
-
-                <Space
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1" />
-
-                <FrameLayout
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="2">
-
-                    <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:contentDescription="@string/status_upload"
-                        app:srcCompat="@drawable/ic_upload" />
-                </FrameLayout>
             </LinearLayout>
-
         </LinearLayout>
 
         <FrameLayout

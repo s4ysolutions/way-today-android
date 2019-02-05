@@ -91,6 +91,8 @@ public class MainActivity extends AppCompatActivity {
     TextView mTextID;
     @BindView(R.id.btn_track_id)
     ImageView mBtnTrackID;
+    @BindView(R.id.status_gps_wait)
+    ImageView mLedGpsWait;
     @BindView(R.id.status_gps_new)
     ImageView mLedGpsNew;
     @BindView(R.id.status_upload_empty)
@@ -107,10 +109,10 @@ public class MainActivity extends AppCompatActivity {
     private Animation mSwitchAnimationFadeOut;
     private Animation mSwitchAnimationFadeIn;
     private Animation mLedGpsNewAnimationFadeOut;
+    private Animation mLedUploadingAnimationFadeOut;
     private boolean isSwitching;
     SparseArray<PermissionRequest> mPermissionRequests = new SparseArray<>(2);
     private BackgroundService mBackgroundService;
-    private boolean mLedGpsNewAnymated = false;
 
     @NonNull
     private ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -129,23 +131,6 @@ public class MainActivity extends AppCompatActivity {
         public void onServiceDisconnected(ComponentName arg0) {
             mBackgroundService = null;
             updateLedBackground();
-        }
-    };
-    private Animation.AnimationListener ledGpsNewAnimationListener = new Animation.AnimationListener() {
-        @Override
-        public void onAnimationStart(Animation animation) {
-
-        }
-
-        @Override
-        public void onAnimationEnd(Animation animation) {
-            mLedGpsNewAnymated = false;
-            mLedGpsNew.setAlpha(0.0f);
-        }
-
-        @Override
-        public void onAnimationRepeat(Animation animation) {
-
         }
     };
 
@@ -208,25 +193,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        ((WTApplication) getApplication()).getAppComponent().inject(this);
-        setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
-        mTextViewTitlePrev3.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitlePrev2.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitlePrev1.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitleNext1.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitleNext2.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitleNext3.setTag(R.id.TAG_IS_TITLE, true);
-        mDetector = new GestureDetectorCompat(this,
-                new FrequencyGestureListener(mViewGestureController, mUserStrategyFrequency));
-        mSwitchAnimationFadeIn = AnimationUtils.loadAnimation(this, R.anim.fadein400);
-        mSwitchAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout400);
-        mLedGpsNewAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout300);
-        mLedGpsNewAnimationFadeOut.setAnimationListener(ledGpsNewAnimationListener);
-    }
+    private boolean mLedGpsNewAnymated = false;
 
     @Override
     protected void onResume() {
@@ -399,40 +366,115 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private Animation.AnimationListener ledGpsNewAnimationListener = new Animation.AnimationListener() {
+        @Override
+        public void onAnimationStart(Animation animation) {
+
+        }
+
+        @Override
+        public void onAnimationEnd(Animation animation) {
+            mLedGpsNewAnymated = false;
+            mLedGpsNew.setVisibility(View.GONE);
+        }
+
+        @Override
+        public void onAnimationRepeat(Animation animation) {
+
+        }
+    };
+    private boolean sUploading;
+    private Animation.AnimationListener ledUploadingAnimationListener = new Animation.AnimationListener() {
+        @Override
+        public void onAnimationStart(Animation animation) {
+
+        }
+
+        @Override
+        public void onAnimationEnd(Animation animation) {
+            sUploading = false;
+            updateLedUploading();
+        }
+
+        @Override
+        public void onAnimationRepeat(Animation animation) {
+
+        }
+    };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        ((WTApplication) getApplication()).getAppComponent().inject(this);
+        setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
+        mTextViewTitlePrev3.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitlePrev2.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitlePrev1.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitleNext1.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitleNext2.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitleNext3.setTag(R.id.TAG_IS_TITLE, true);
+        mDetector = new GestureDetectorCompat(this,
+                new FrequencyGestureListener(mViewGestureController, mUserStrategyFrequency));
+        mSwitchAnimationFadeIn = AnimationUtils.loadAnimation(this, R.anim.fadein400);
+        mSwitchAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout400);
+        mLedGpsNewAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout300);
+        mLedGpsNewAnimationFadeOut.setAnimationListener(ledGpsNewAnimationListener);
+        mLedUploadingAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout750);
+        mLedUploadingAnimationFadeOut.setAnimationListener(ledUploadingAnimationListener);
+    }
+
     private void updateLedGpsNew() {
+        if (BuildConfig.DEBUG) {
+            Log.d(LT, "updateLedGpsNew " + mLedGpsNewAnymated);
+        }
         if (mLedGpsNewAnymated)
             return;
-        mLedGpsNewAnymated = true;
+        mLedGpsNew.setVisibility(View.VISIBLE);
         mLedGpsNew.setAlpha(1.0f);
+        mLedGpsNewAnymated = true;
         mLedGpsNew.startAnimation(mLedGpsNewAnimationFadeOut);
     }
 
+    private void fadeOutUploading() {
+        mLedUploadUploading.startAnimation(mLedUploadingAnimationFadeOut);
+    }
 
     private void updateLedUploading() {
+        if (BuildConfig.DEBUG) {
+            Log.d(LT, "updateLedUploading " + sUploading + " " + uploadStatus().toString());
+        }
         switch (uploadStatus()) {
             case QUEUED:
-                mLedUploadEmpty.setVisibility(View.GONE);
-                mLedUploadQueue.setVisibility(View.VISIBLE);
-                mLedUploadUploading.setVisibility(View.GONE);
-                mLedUploadError.setVisibility(View.GONE);
+                if (sUploading) {
+                    fadeOutUploading();
+                } else {
+                    mLedUploadError.setVisibility(View.GONE);
+                    mLedUploadQueue.setVisibility(View.VISIBLE);
+                    mLedUploadError.setVisibility(View.GONE);
+                }
                 break;
             case UPLOADING:
-                mLedUploadEmpty.setVisibility(View.GONE);
-                mLedUploadQueue.setVisibility(View.GONE);
                 mLedUploadUploading.setVisibility(View.VISIBLE);
+                mLedUploadQueue.setVisibility(View.GONE);
                 mLedUploadError.setVisibility(View.GONE);
+                sUploading = true;
                 break;
             case ERROR:
-                mLedUploadEmpty.setVisibility(View.GONE);
-                mLedUploadQueue.setVisibility(View.GONE);
-                mLedUploadUploading.setVisibility(View.GONE);
-                mLedUploadError.setVisibility(View.VISIBLE);
+                if (sUploading) {
+                    fadeOutUploading();
+                } else {
+                    mLedUploadError.setVisibility(View.VISIBLE);
+                }
                 break;
             default:
-                mLedUploadEmpty.setVisibility(View.VISIBLE);
-                mLedUploadQueue.setVisibility(View.GONE);
-                mLedUploadUploading.setVisibility(View.GONE);
-                mLedUploadError.setVisibility(View.GONE);
+                if (sUploading) {
+                    fadeOutUploading();
+                } else {
+                    mLedUploadQueue.setVisibility(View.GONE);
+                    mLedUploadUploading.setVisibility(View.GONE);
+                    mLedUploadError.setVisibility(View.GONE);
+                }
         }
     }
 
