@@ -35,6 +35,8 @@ import static java.util.UUID.randomUUID;
 import static solutions.s4y.waytoday.utils.FConv.i;
 
 public class UploadJobService extends JobIntentService {
+    @SuppressWarnings("unused")
+    private static final String LT = JobIntentService.class.getSimpleName();
     public static final PublishSubject<Status> subjectStatus = PublishSubject.create();
     private static Boolean sIsUploading = false;
     private static Boolean sIsError = false;
@@ -61,12 +63,6 @@ public class UploadJobService extends JobIntentService {
         return Status.EMPTY;
     }
 
-    public static void enqueueUploadLocations(Context context) {
-        RetryUploadAlarm.cancelRetryUploadAlarmmanager(context);
-        Intent intent = new Intent(context, UploadJobService.class);
-        enqueueWork(context, UploadJobService.class, 1000, intent);
-    }
-
     @Override
     public void onCreate() {
         super.onCreate();
@@ -91,42 +87,9 @@ public class UploadJobService extends JobIntentService {
         super.onDestroy();
     }
 
-    public static void enqueueUploadLocation(Context context, Location location) {
-        synchronized (uploadQueue) {
-            uploadQueue.add(location);
-        }
-        subjectStatus.onNext(uploadStatus());
-        enqueueUploadLocations(context);
-    }
-
-    @Override
-    protected void onHandleWork(@NonNull Intent intent) {
-        if (sIsUploading) {
-            ErrorsObservable.notify(new Error("UploadJobService re-entry"), BuildConfig.DEBUG);
-        }
-        sIsError = false;
-        sIsUploading = true;
-
-        subjectStatus.onNext(uploadStatus());
-
-        RetryUploadAlarm.cancelRetryUploadAlarmmanager(this);
-
-        boolean completed = false;
-        if (isConnected()) {
-            uploadStore();
-            completed = uploadQueue();
-        }
-        if (!completed) {
-            if (uploadQueue.size() > MAX_LOCATIONS_MEMORY) {
-                saveQueueToStore();
-            }
-            destoryGrpcChannel();
-            RetryUploadAlarm.startRetryUploadAlarmmanager(this);
-            sIsError = true;
-        }
-        sIsUploading = false;
-        subjectStatus.onNext(uploadStatus());
-    }
+    private static boolean sPrevIsError;
+    private static boolean sPrevIsUploading;
+    private static int sPrevSize;
 
     private void uploadStore() {
         // TODO: do not have store yet
@@ -235,6 +198,82 @@ public class UploadJobService extends JobIntentService {
     @VisibleForTesting()
     public TrackerGrpc.TrackerBlockingStub getGrpcStub() {
         return TrackerGrpc.newBlockingStub(ch);
+    }
+
+    private static Status sPrevStatus;
+
+    public static void enqueueUploadLocation(Context context, Location location) {
+        synchronized (uploadQueue) {
+            uploadQueue.add(location);
+        }
+        notifyUpdateState();
+        enqueueUploadLocations(context);
+    }
+
+    public static void enqueueUploadLocations(Context context) {
+        RetryUploadAlarm.cancelRetryUploadAlarmmanager(context);
+        Intent intent = new Intent(context, UploadJobService.class);
+        enqueueWork(context, UploadJobService.class, 1000, intent);
+    }
+
+    private static void notifyUpdateState() {
+        if (BuildConfig.DEBUG) {
+            boolean changed = false;
+            if (sIsError != sPrevIsError) {
+                sPrevIsError = sIsError;
+                changed = true;
+            }
+            if (sIsUploading != sPrevIsUploading) {
+                sPrevIsUploading = sIsUploading;
+                changed = true;
+            }
+            int size = uploadQueue.size();
+            if (size != sPrevSize) {
+                sPrevSize = size;
+                changed = true;
+            }
+            if (changed) {
+                Status status = uploadStatus();
+                if (sPrevStatus == status) {
+                    ErrorsObservable.notify(new Exception("Status must not be the same"), true);
+                }
+                sPrevStatus = status;
+                subjectStatus.onNext(uploadStatus());
+            } else {
+                ErrorsObservable.notify(new Exception("Should never be called without changes"), true);
+            }
+        } else {
+            subjectStatus.onNext(uploadStatus());
+        }
+    }
+
+    @Override
+    protected void onHandleWork(@NonNull Intent intent) {
+        if (sIsUploading) {
+            ErrorsObservable.notify(new Error("UploadJobService re-entry"), BuildConfig.DEBUG);
+        }
+        sIsError = false;
+        sIsUploading = true;
+
+        notifyUpdateState();
+
+        RetryUploadAlarm.cancelRetryUploadAlarmmanager(this);
+
+        boolean completed = false;
+        if (isConnected()) {
+            uploadStore();
+            completed = uploadQueue();
+        }
+        if (!completed) {
+            if (uploadQueue.size() > MAX_LOCATIONS_MEMORY) {
+                saveQueueToStore();
+            }
+            destoryGrpcChannel();
+            RetryUploadAlarm.startRetryUploadAlarmmanager(this);
+            sIsError = true;
+        }
+        sIsUploading = false;
+        notifyUpdateState();
     }
 
 }
