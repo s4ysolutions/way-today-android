@@ -5,7 +5,7 @@ import solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency;
 public class UserStrategy implements Strategy {
     private final PreferenceUpdateFrequency preference;
 
-    UserStrategy(PreferenceUpdateFrequency preference) {
+    public UserStrategy(PreferenceUpdateFrequency preference) {
         this.preference = preference;
     }
 

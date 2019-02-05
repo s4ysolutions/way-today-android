@@ -20,9 +20,11 @@ import solutions.s4y.waytoday.locations.LocationsGPSUpdater;
 import solutions.s4y.waytoday.locations.LocationsUpdater;
 import solutions.s4y.waytoday.preferences.PreferenceIsTracking;
 import solutions.s4y.waytoday.preferences.PreferenceSound;
+import solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency;
 import solutions.s4y.waytoday.sound.MediaPlayerUtils;
 import solutions.s4y.waytoday.strategies.RTStrategy;
 import solutions.s4y.waytoday.strategies.Strategy;
+import solutions.s4y.waytoday.strategies.UserStrategy;
 import solutions.s4y.waytoday.upload.UploadJobService;
 
 import static solutions.s4y.waytoday.notifications.AppNotification.FOREGROUND_NOTIFICATION_ID;
@@ -36,6 +38,9 @@ public class BackgroundService extends Service {
     PreferenceIsTracking mIsTracking;
     @Inject
     PreferenceSound mSound;
+    @Inject
+    PreferenceUpdateFrequency mPreferenceUpdateFrequency;
+
     private boolean mForeground;
     private CompositeDisposable mServiceDisposables;
 
@@ -53,6 +58,7 @@ public class BackgroundService extends Service {
     public void onCreate() {
         super.onCreate();
         ((WTApplication) getApplication()).getAppComponent().inject(this);
+        currentStrategy = new UserStrategy(mPreferenceUpdateFrequency);
         gpsLocatonUpdater = new LocationsGPSUpdater(this);
         mServiceDisposables = new CompositeDisposable();
         mServiceDisposables.add(
@@ -63,6 +69,10 @@ public class BackgroundService extends Service {
                 UploadJobService
                         .subjectStatus
                         .subscribe(status -> handleUploadStatus()));
+        mServiceDisposables.add(
+                mPreferenceUpdateFrequency
+                        .subject
+                        .subscribe(freq -> restartUpdateLocations()));
         if (mIsTracking.isOn()) {
             start(!MainActivity.sHasFocus);
         }
@@ -140,6 +150,14 @@ public class BackgroundService extends Service {
             removeFromForeground();
         }
         startUpdateLocations();
+    }
+
+
+    private void restartUpdateLocations() {
+        if (LocationUpdatesListener.isUpdating) {
+            stopUpdateLocations();
+            startUpdateLocations();
+        }
     }
 
     public class LocationsServiceBinder extends Binder {

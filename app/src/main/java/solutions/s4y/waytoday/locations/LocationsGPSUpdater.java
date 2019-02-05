@@ -4,9 +4,11 @@ import android.Manifest;
 import android.content.Context;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
+import solutions.s4y.waytoday.BuildConfig;
 import solutions.s4y.waytoday.MainActivity;
 import solutions.s4y.waytoday.R;
 import solutions.s4y.waytoday.errors.ErrorsObservable;
@@ -15,6 +17,7 @@ import solutions.s4y.waytoday.permissions.RestartOnGivenPermssion;
 import solutions.s4y.waytoday.strategies.Strategy;
 
 public class LocationsGPSUpdater implements LocationsUpdater {
+    private static final String LT = LocationUpdatesListener.class.getSimpleName();
     @VisibleForTesting
     LocationManager mLocationManager;
 
@@ -63,6 +66,9 @@ public class LocationsGPSUpdater implements LocationsUpdater {
                 ErrorsObservable.toast(R.string.no_location_manager);
                 mRequestUpdatesListener.onRequestResult(false);
                 return;
+            }
+            if (BuildConfig.DEBUG) {
+                Log.d(LT, "requestLocationUpdates " + mStrategy.getMinTime() + " ms");
             }
             try {
                 mLocationManager.requestLocationUpdates(

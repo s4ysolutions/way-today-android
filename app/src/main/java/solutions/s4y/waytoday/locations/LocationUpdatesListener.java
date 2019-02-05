@@ -20,7 +20,9 @@ public class LocationUpdatesListener {
     static private final LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-            Log.d(LT, "onLocationChanged");
+            if (BuildConfig.DEBUG) {
+                Log.d(LT, "onLocationChanged");
+            }
             subjectLocations.onNext(location);
         }
 
@@ -33,14 +35,18 @@ public class LocationUpdatesListener {
 
         @Override
         public void onProviderEnabled(String provider) {
-            Log.d(LT, "onProviderEnabled");
+            if (BuildConfig.DEBUG) {
+                Log.d(LT, "onProviderEnabled");
+            }
             isSuspended = false;
             subjectTrackingState.onNext(new TrackingState());
         }
 
         @Override
         public void onProviderDisabled(String provider) {
-            Log.d(LT, "onProviderDisabled");
+            if (BuildConfig.DEBUG) {
+                Log.d(LT, "onProviderDisabled");
+            }
             isSuspended = true;
             subjectTrackingState.onNext(new TrackingState());
         }
@@ -48,7 +54,9 @@ public class LocationUpdatesListener {
     static private final RequestUpdatesListener requestListener = new RequestUpdatesListener() {
         @Override
         public void onRequestResult(boolean success) {
-            Log.d(LT, "onRequestResult: " + success);
+            if (BuildConfig.DEBUG) {
+                Log.d(LT, "onRequestResult: " + success);
+            }
             isSuspended = !success;
             subjectTrackingState.onNext(new TrackingState());
         }
@@ -57,7 +65,9 @@ public class LocationUpdatesListener {
     private static LocationsUpdater updater;
 
     public static void requestStart(@NonNull final LocationsUpdater updater, @NonNull final Strategy strategy) {
-        Log.d(LT, "requestStart");
+        if (BuildConfig.DEBUG) {
+            Log.d(LT, "requestStart each " + strategy.getMinTime() + " ms");
+        }
         stop();
         LocationUpdatesListener.updater = updater;
         isUpdating = true;
@@ -67,7 +77,9 @@ public class LocationUpdatesListener {
     }
 
     public static void stop() {
-        Log.d(LT, "stop");
+        if (BuildConfig.DEBUG) {
+            Log.d(LT, "stop");
+        }
         if (updater != null) {
             updater.unregisterListener(locationListener);
             updater = null;
