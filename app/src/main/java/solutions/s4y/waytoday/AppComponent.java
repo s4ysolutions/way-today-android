@@ -24,8 +24,8 @@ public interface AppComponent {
     void inject(WTApplication application);
     void inject(MainActivity activity);
     void inject(IDService service);
-
     void inject(UploadJobService service);
-
     void inject(BackgroundService service);
+
+    void inject(BootReceiver receiver);
 }
