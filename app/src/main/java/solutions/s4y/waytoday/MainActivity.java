@@ -49,7 +49,7 @@ import solutions.s4y.waytoday.upload.UploadJobService;
 import static solutions.s4y.waytoday.upload.UploadJobService.uploadStatus;
 
 public class MainActivity extends AppCompatActivity {
-    private final static String LT = AppCompatActivity.class.getSimpleName();
+    private final static String LT = MainActivity.class.getSimpleName();
     @Inject
     PreferenceUpdateFrequency mUserStrategyFrequency;
     public static boolean sHasFocus = false;
@@ -201,60 +201,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean mLedGpsNewAnymated = false;
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Intent intent = new Intent(this, BackgroundService.class);
-        bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
-
-        if (BuildConfig.DEBUG) {
-            if (resumeDisposables != null) {
-                ErrorsObservable.notify(new Exception("resumeDisposables != null"));
-            }
-        }
-        resumeDisposables = new CompositeDisposable();
-        resumeDisposables.add(mUserStrategyFrequency
-                .subject
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(userStrategy -> updateUserStrategyChooser()));
-        resumeDisposables.add(mIsActive
-                .subject
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(userStrategy -> updateSwitch()));
-        resumeDisposables.add(LocationUpdatesListener
-                .subjectTrackingState
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(state -> updateLedBackground()));
-        resumeDisposables.add(LocationUpdatesListener
-                .subjectLocations
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(state -> updateLedGpsNew()));
-        resumeDisposables.add(PermissionRequestObservable
-                .subject
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(this::onPermissionRequest));
-        resumeDisposables.add(UploadJobService
-                .subjectStatus
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(status -> this.updateLedUploading()));
-        resumeDisposables.add(mTrackID
-                .subject
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(trackID -> {
-                    updateTrackID();
-                    MediaPlayerUtils.getInstance().playTrackID(this);
-                }));
-        updateUserStrategyChooser();
-        updateSwitch();
-        updateLedBackground();
-        updateTrackID();
-        updateLedUploading();
-        updateSound();
-        if ("".equals(mTrackID.get())) {
-            IDService.enqueueRetrieveId(this, "");
-        }
-    }
+    private static final float alphaIDinProgress = 0.3f;
+    private static final float alphaIDnotInProgress = 0.9f;
 
     @OnClick(R.id.switch_off)
     public void switchOff(View view) {
@@ -357,20 +305,94 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Intent intent = new Intent(this, BackgroundService.class);
+        bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
+
+        if (BuildConfig.DEBUG) {
+            if (resumeDisposables != null) {
+                ErrorsObservable.notify(new Exception("resumeDisposables != null"));
+            }
+        }
+        resumeDisposables = new CompositeDisposable();
+        resumeDisposables.add(mUserStrategyFrequency
+                .subject
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(userStrategy -> updateUserStrategyChooser()));
+        resumeDisposables.add(mIsActive
+                .subject
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(userStrategy -> updateSwitch()));
+        resumeDisposables.add(LocationUpdatesListener
+                .subjectTrackingState
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(state -> updateLedBackground()));
+        resumeDisposables.add(LocationUpdatesListener
+                .subjectLocations
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(state -> updateLedGpsNew()));
+        resumeDisposables.add(PermissionRequestObservable
+                .subject
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::onPermissionRequest));
+        resumeDisposables.add(UploadJobService
+                .subjectStatus
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(status -> this.updateLedUploading()));
+        resumeDisposables.add(mTrackID
+                .subject
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(trackID -> {
+                    updateTrackID();
+                    MediaPlayerUtils.getInstance().playTrackID(this);
+                }));
+        resumeDisposables.add(ErrorsObservable
+                .subject
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(ignored -> updateAllViews()));
+        if (mTrackID.isNotSet()) {
+            IDService.enqueueRetrieveId(this, "");
+        }
+        updateAllViews();
+    }
+
+    private void updateAllViews() {
+        updateUserStrategyChooser();
+        updateSwitch();
+        updateLedBackground();
+        updateTrackID();
+        updateLedUploading();
+        updateSound();
+    }
+
     @OnClick(R.id.btn_track_id)
     public void newTrackID(View view) {
-        mBtnTrackID.setAlpha(0.3f);
-        mTextID.setAlpha(0.3f);
+        mBtnTrackID.setAlpha(alphaIDinProgress);
+        mTextID.setAlpha(alphaIDinProgress);
         IDService.enqueueRetrieveId(this, mTrackID.get());
     }
 
     private void updateTrackID() {
-        mBtnTrackID.setAlpha(0.9f);
-        mTextID.setAlpha(0.9f);
-        if ("".equals(mTrackID.get())) {
-            mTextID.setText(" ... ");
-        } else {
+        float alpha = (IDService.isProgress() && !IDService.sFailed)
+                ? alphaIDinProgress : alphaIDnotInProgress;
+        mBtnTrackID.setAlpha(alpha);
+        mTextID.setAlpha(alpha);
+        if (BuildConfig.DEBUG) {
+            Log.d(LT,
+                    "updateTrackID id=\"" + mTrackID.get() + "\" isSet=" + mTrackID.isSet() +
+                            " failed=" + IDService.sFailed + " inProgress=" + IDService.isProgress() +
+                            " alpha=" + alpha);
+        }
+        if (mTrackID.isSet()) {
             mTextID.setText(mTrackID.get());
+        } else {
+            if (IDService.sFailed) {
+                mTextID.setText(R.string.id_request_failed);
+            } else {
+                mTextID.setText(" ... ");
+            }
         }
     }
 

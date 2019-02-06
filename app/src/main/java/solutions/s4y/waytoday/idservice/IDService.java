@@ -30,6 +30,7 @@ public class IDService extends JobIntentService {
     protected ManagedChannel ch = null;
     @Inject
     PreferenceTrackID trackID;
+    public static boolean sFailed = false;
 
     static synchronized public boolean isProgress() {
         return sProgress;
@@ -74,9 +75,9 @@ public class IDService extends JobIntentService {
 
     @Override
     protected void onHandleWork(@NonNull Intent intent) {
+        setProgress(true);
+        sFailed = false;
         if (isConnected()) {
-            setProgress(true);
-
             String id = intent.getStringExtra(EXTRA_PREVID);
 
             try {
@@ -96,10 +97,14 @@ public class IDService extends JobIntentService {
                 final String tid = response.getTid();
                 trackID.set(tid);
             } catch (final Exception e) {
+                sFailed = trackID.isNotSet();
                 reportFail(e);
             }
-            setProgress(false);
+        } else {
+            sFailed = trackID.isNotSet();
+            // TODO: handle the case
         }
+        setProgress(false);
     }
 
     @VisibleForTesting()

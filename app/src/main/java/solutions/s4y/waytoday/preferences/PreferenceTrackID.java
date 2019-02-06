@@ -12,4 +12,12 @@ public class PreferenceTrackID extends BaseStringPreference {
     public String get() {
         return getBoxed();
     }
+
+    public boolean isNotSet() {
+        return "".equals(getBoxed());
+    }
+
+    public boolean isSet() {
+        return !"".equals(getBoxed());
+    }
 }
