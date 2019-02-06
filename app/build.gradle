@@ -101,3 +101,4 @@ dependencies {
     androidTestImplementation "org.mockito:mockito-android:2.23.4"
     androidTestAnnotationProcessor 'com.google.dagger:dagger-compiler:2.15'
 }
+apply plugin: 'com.google.gms.google-services'
