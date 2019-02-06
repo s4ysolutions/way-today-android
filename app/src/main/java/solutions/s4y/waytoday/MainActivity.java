@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -580,4 +581,24 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @OnClick(R.id.btn_share)
+    public void onShareBtnClick(View v) {
+        if (mTrackID.isNotSet()) return;
+
+        String txt = String.format(getResources().getString(R.string.share_link), mTrackID.get());
+        Intent sendIntent = new Intent();
+        sendIntent.setAction(Intent.ACTION_SEND);
+        sendIntent.putExtra(Intent.EXTRA_TEXT, txt);
+        sendIntent.putExtra(Intent.EXTRA_SUBJECT, getResources().getString(R.string.share_subj));
+        // sendIntent.setType("message/rfc822");
+        sendIntent.setType("text/plain");
+        startActivity(Intent.createChooser(sendIntent, getResources().getString(R.string.share_title)));
+    }
+
+    @OnClick(R.id.btn_way_today)
+    public void onWayToday(View v) {
+        if (mTrackID.isNotSet()) return;
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://way.today/#" + mTrackID.get()));
+        startActivity(browserIntent);
+    }
 }

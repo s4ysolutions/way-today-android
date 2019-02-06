@@ -21,4 +21,7 @@
     <string name="request_permission_title">Permission request</string>
     <string name="request_location_permission">Allow access to your position</string>
     <string name="id_request_failed">couldn\'t get</string>
+    <string name="share_title">Share via…</string>
+    <string name="share_link"><![CDATA[Track my location by clicking https://way.today/#%1$s!30m or use ID %1$s on the site way.today]]></string>
+    <string name="share_subj">Way.Today location note</string>
 </resources>

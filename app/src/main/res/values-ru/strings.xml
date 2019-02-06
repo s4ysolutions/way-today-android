@@ -21,4 +21,8 @@
     <string name="request_permission_title">Дополнительное разрешение</string>
     <string name="request_location_permission">Позволить определять местоположение</string>
     <string name="id_request_failed">не получен</string>
+    <string name="share_title">Отправить местоположение…</string>
+    <string name="share_link"><![CDATA[Мое положение доступно по ссылке https://way.today/#%1$s!30m или по коду %1$s на сайте простопуть.рф]]></string>
+    <string name="share_subj">Ссобщение с сервиса Way.Today</string>
+
 </resources>

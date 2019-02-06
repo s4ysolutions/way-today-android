@@ -21,4 +21,7 @@
     <string name="request_permission_title">طلب إذن</string>
     <string name="request_location_permission">إذن لنظام تحديد المواقع</string>
     <string name="id_request_failed">فشل للحصول</string>
+    <string name="share_title">شارك عبر…</string>
+    <string name="share_link"><![CDATA[تتبع موقعي بالنقر https://way.today/#%1$s!30m]]></string>
+    <string name="share_subj">Way.Today location note</string>
 </resources>
