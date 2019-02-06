@@ -137,15 +137,20 @@ public class UploadJobService extends JobIntentService {
                 }
                 if (ch == null) ch = grpcChannelProvider.channel();
                 TrackerGrpc.TrackerBlockingStub grpcStub = getGrpcStub();
-                TrackerOuterClass.AddLocationResponse resp = grpcStub.addLocations(req.build());
-                if (resp.getOk()) {
-                    for (int i = 0; i < packSize; i++) {
-                        synchronized (uploadQueue) {
-                            uploadQueue.pollFirst();
+                try {
+                    TrackerOuterClass.AddLocationResponse resp = grpcStub.addLocations(req.build());
+                    if (resp.getOk()) {
+                        for (int i = 0; i < packSize; i++) {
+                            synchronized (uploadQueue) {
+                                uploadQueue.pollFirst();
+                            }
                         }
+                    } else {
+                        ErrorsObservable.notify(new Exception(getString(R.string.upload_not_ok)));
+                        break;
                     }
-                } else {
-                    ErrorsObservable.notify(new Exception(getString(R.string.upload_not_ok)));
+                } catch (Exception e) {
+                    ErrorsObservable.notify(e, true);
                     break;
                 }
             }
