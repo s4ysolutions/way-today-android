@@ -517,12 +517,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @SuppressWarnings("unused")
     @OnClick(R.id.btn_sound_on)
     void onSoundOnClick(View v) {
         mSound.set(false);
         updateSound();
     }
 
+    @SuppressWarnings("unused")
     @OnClick(R.id.btn_sound_off)
     void onSoundOffClick(View v) {
         mSound.set(true);
