@@ -131,6 +131,7 @@ public class UploadJobService extends JobIntentService {
                 TrackerOuterClass.AddLocationsRequest.Builder req =
                         TrackerOuterClass.AddLocationsRequest
                                 .newBuilder();
+                req.setTid(mTrackID.get());
                 for (Location location : pack) {
                     req.addLocations(marshall(location));
                 }
