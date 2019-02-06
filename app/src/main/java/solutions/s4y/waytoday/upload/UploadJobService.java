@@ -252,6 +252,7 @@ public class UploadJobService extends JobIntentService {
 
     @Override
     protected void onHandleWork(@NonNull Intent intent) {
+        if (mTrackID.isNotSet()) return;
         if (sIsUploading) {
             ErrorsObservable.notify(new Error("UploadJobService re-entry"), BuildConfig.DEBUG);
         }

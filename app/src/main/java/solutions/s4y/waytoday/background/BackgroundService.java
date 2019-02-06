@@ -20,6 +20,7 @@ import solutions.s4y.waytoday.locations.LocationsGPSUpdater;
 import solutions.s4y.waytoday.locations.LocationsUpdater;
 import solutions.s4y.waytoday.preferences.PreferenceIsTracking;
 import solutions.s4y.waytoday.preferences.PreferenceSound;
+import solutions.s4y.waytoday.preferences.PreferenceTrackID;
 import solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency;
 import solutions.s4y.waytoday.sound.MediaPlayerUtils;
 import solutions.s4y.waytoday.strategies.RTStrategy;
@@ -36,6 +37,8 @@ public class BackgroundService extends Service {
     private LocationsUpdater gpsLocatonUpdater;
     @Inject
     PreferenceIsTracking mIsTracking;
+    @Inject
+    PreferenceTrackID mTrackID;
     @Inject
     PreferenceSound mSound;
     @Inject
@@ -113,6 +116,8 @@ public class BackgroundService extends Service {
 
     void onLocation(Location location) {
         RetryUploadAlarm.cancelRetryUploadAlarmmanager(this);
+        if (mTrackID.isNotSet())
+            return;
         enqueueUploadLocation(this, location);
         if (mSound.isOn()) {
             MediaPlayerUtils.getInstance().playGpsOk(this);
