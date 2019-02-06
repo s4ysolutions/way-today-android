@@ -1,10 +1,12 @@
 package solutions.s4y.waytoday;
 
 import android.app.Application;
+import android.content.Context;
 import android.os.StrictMode;
 
 import javax.inject.Inject;
 
+import androidx.multidex.MultiDex;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import solutions.s4y.waytoday.errors.ErrorReporter;
@@ -47,6 +49,12 @@ public class WTApplication extends Application {
                 .subscribe(errorNotification -> errorReporter.report(this, errorNotification)));
         mAppComponent.inject(this);
         mAppNotification = new AppNotification(this);
+    }
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        MultiDex.install(this);
     }
 
     protected AppComponent prepareAppComponent() {
