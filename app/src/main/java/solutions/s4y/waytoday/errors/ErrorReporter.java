@@ -4,7 +4,7 @@ import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
-//import com.crashlytics.android.Crashlytics;
+import com.crashlytics.android.Crashlytics;
 
 public class ErrorReporter { // for testing purpose
     private Toast mToast;
@@ -26,7 +26,7 @@ public class ErrorReporter { // for testing purpose
         }
         if (err.th != null) {
             Log.e("WT message", err.getMessage(), err.th);
-//        Crashlytics.logException(err.th);
+            Crashlytics.logException(err.th);
         }
     }
 }
