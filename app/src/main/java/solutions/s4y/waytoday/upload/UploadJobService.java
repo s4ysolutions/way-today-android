@@ -191,7 +191,7 @@ public class UploadJobService extends JobIntentService {
         return LocationOuterClass.Location.newBuilder()
                 .setAcc(i(location.getAccuracy()))
                 .setAlt(i(location.getAltitude()))
-                .setBatp((level == -1 || scale == -1) ? 50 : i(((float) level * 100.0f / (float) scale)))
+                .setBatp((level == -1 || scale == -1) ? 50 : Math.round((float) level * 100.0f / (float) scale))
                 .setBats(status != 0)
                 .setBear(location.hasBearing() ? i(location.getBearing()) : Bear.EMPTY_BEAR)
                 .setLat(i(location.getLatitude()))
