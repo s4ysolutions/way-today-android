@@ -18,3 +18,5 @@ session.vim
 app/google-services.json
 app/release
 *.iml
+app/src/main/java/solutions/s4y/waytoday/wsse/Secret.java
+local.properties
