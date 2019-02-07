@@ -7,18 +7,21 @@ import solutions.s4y.waytoday.preferences.PreferenceGRPCHost;
 import solutions.s4y.waytoday.preferences.PreferenceGRPCPort;
 
 public class GRPCChannelProvider {
-    private PreferenceGRPCHost host;
-    private PreferenceGRPCPort port;
+    private final boolean tls;
+    private final PreferenceGRPCHost host;
+    private final PreferenceGRPCPort port;
 
     GRPCChannelProvider(@NonNull PreferenceGRPCHost host, @NonNull PreferenceGRPCPort port) {
         this.host = host;
         this.port = port;
+        tls = (port.get() % 1000) > 100;
     }
 
     public ManagedChannel channel() {
-        return ManagedChannelBuilder
-                .forAddress(host.get(), port.get())
-                .usePlaintext(true)
-                .build();
+        ManagedChannelBuilder channelBuilder = ManagedChannelBuilder
+                .forAddress(host.get(), port.get());
+        if (!tls)
+            channelBuilder.usePlaintext();
+        return channelBuilder.build();
     }
 }
