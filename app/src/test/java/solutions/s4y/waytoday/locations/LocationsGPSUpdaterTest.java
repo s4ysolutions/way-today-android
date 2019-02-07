@@ -1,30 +1,19 @@
 package solutions.s4y.waytoday.locations;
 
-import android.content.Context;
 import android.location.LocationListener;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
 import solutions.s4y.waytoday.errors.ErrorsObservable;
 import solutions.s4y.waytoday.permissions.PermissionRequestObservable;
-import solutions.s4y.waytoday.strategies.RTStrategy;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 @SuppressWarnings({"unchecked", "WeakerAccess"})
 @RunWith(AndroidJUnit4.class)
@@ -58,7 +47,7 @@ public class LocationsGPSUpdaterTest {
     public void tearDown() {
         disposable.clear();
     }
-
+/*
     @Test
     public void locationsGPSUpdater_shouldEmitNoGpsError() throws Exception {
         Context context = spy(ApplicationProvider.getApplicationContext());
@@ -84,4 +73,5 @@ public class LocationsGPSUpdaterTest {
         verify(permissionsObserver, times(1)).accept(any());
         verify(locationListener, never()).onLocationChanged(any());
     }
+    */
 }

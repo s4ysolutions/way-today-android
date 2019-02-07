@@ -19,18 +19,22 @@ import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import androidx.core.app.JobIntentService;
 import io.grpc.ManagedChannel;
+import io.grpc.Metadata;
+import io.grpc.stub.MetadataUtils;
 import io.reactivex.subjects.PublishSubject;
 import solutions.s4y.waytoday.BuildConfig;
 import solutions.s4y.waytoday.R;
 import solutions.s4y.waytoday.WTApplication;
 import solutions.s4y.waytoday.errors.ErrorsObservable;
 import solutions.s4y.waytoday.grpc.GRPCChannelProvider;
+import solutions.s4y.waytoday.grpc.Keys;
 import solutions.s4y.waytoday.grpc.LocationOuterClass;
 import solutions.s4y.waytoday.grpc.TrackerGrpc;
 import solutions.s4y.waytoday.grpc.TrackerOuterClass;
 import solutions.s4y.waytoday.preferences.PreferenceSound;
 import solutions.s4y.waytoday.preferences.PreferenceTrackID;
 import solutions.s4y.waytoday.utils.Bear;
+import solutions.s4y.waytoday.wsse.Wsse;
 
 import static java.util.UUID.randomUUID;
 import static solutions.s4y.waytoday.utils.FConv.i;
@@ -138,6 +142,10 @@ public class UploadJobService extends JobIntentService {
                 if (ch == null) ch = grpcChannelProvider.channel();
                 TrackerGrpc.TrackerBlockingStub grpcStub = getGrpcStub();
                 try {
+                    Metadata headers = new Metadata();
+                    headers.put(Keys.wsseKey, Wsse.getToken());
+
+                    grpcStub = MetadataUtils.attachHeaders(grpcStub, headers);
                     TrackerOuterClass.AddLocationResponse resp = grpcStub.addLocations(req.build());
                     if (resp.getOk()) {
                         for (int i = 0; i < packSize; i++) {

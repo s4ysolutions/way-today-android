@@ -13,13 +13,17 @@ import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import androidx.core.app.JobIntentService;
 import io.grpc.ManagedChannel;
+import io.grpc.Metadata;
+import io.grpc.stub.MetadataUtils;
 import solutions.s4y.waytoday.AppComponent;
 import solutions.s4y.waytoday.WTApplication;
 import solutions.s4y.waytoday.errors.ErrorsObservable;
 import solutions.s4y.waytoday.grpc.GRPCChannelProvider;
+import solutions.s4y.waytoday.grpc.Keys;
 import solutions.s4y.waytoday.grpc.TrackerGrpc;
 import solutions.s4y.waytoday.grpc.TrackerOuterClass;
 import solutions.s4y.waytoday.preferences.PreferenceTrackID;
+import solutions.s4y.waytoday.wsse.Wsse;
 
 
 public class IDService extends JobIntentService {
@@ -86,6 +90,11 @@ public class IDService extends JobIntentService {
                 if (ch == null)
                     ch = grpcChannelProvider.channel();
                 TrackerGrpc.TrackerBlockingStub grpcStub = getGrpcStub();
+
+                Metadata headers = new Metadata();
+                headers.put(Keys.wsseKey, Wsse.getToken());
+
+                grpcStub = MetadataUtils.attachHeaders(grpcStub, headers);
 
                 TrackerOuterClass.GenerateTrackerIDRequest req = TrackerOuterClass.
                         GenerateTrackerIDRequest.
