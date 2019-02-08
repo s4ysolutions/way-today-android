@@ -2,8 +2,10 @@ package solutions.s4y.waytoday.sound;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
+import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.os.Build;
 
 import java.io.IOException;
 
@@ -17,8 +19,15 @@ public class MediaPlayerUtils implements MediaPlayer.OnPreparedListener {
 
     private MediaPlayerUtils() {
         mPlayer = new MediaPlayer();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            mPlayer.setAudioAttributes(new AudioAttributes
+                    .Builder()
+                    .setFlags(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build());
+        } else {
+            mPlayer.setAudioStreamType(AudioManager.STREAM_NOTIFICATION);
+        }
         mPlayer.setOnPreparedListener(this);
-        mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
     }
 
     public static MediaPlayerUtils getInstance() {
@@ -54,7 +63,6 @@ public class MediaPlayerUtils implements MediaPlayer.OnPreparedListener {
             stop();
             mPlayer.setLooping(false);
             mPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-            mPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
             mPlayer.prepareAsync();
         } catch (IOException e) {
             ErrorsObservable.notify(e, false);
