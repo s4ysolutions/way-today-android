@@ -4,53 +4,89 @@ import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
-import android.media.MediaPlayer;
+import android.media.SoundPool;
 import android.os.Build;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 import solutions.s4y.waytoday.errors.ErrorsObservable;
 
 import static android.content.Context.AUDIO_SERVICE;
 
-public class MediaPlayerUtils implements MediaPlayer.OnPreparedListener {
+public class MediaPlayerUtils {
     private static MediaPlayerUtils instance;
-    private final MediaPlayer mPlayer;
+    //    private final MediaPlayer mPlayer;
+    private final SoundPool mSoundPool;
+    private final Set<Integer> played = new HashSet<>();
+    private int streamSwitch;
+    private int streamIdOk;
+    private int streamGpsOk;
+    private int streamUploadOk;
+    private int streamUploadFail;
 
-    private MediaPlayerUtils() {
-        mPlayer = new MediaPlayer();
+    private MediaPlayerUtils(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            mPlayer.setAudioAttributes(new AudioAttributes
-                    .Builder()
-                    .setFlags(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build());
+            mSoundPool = new SoundPool.Builder()
+                    .setMaxStreams(7)
+                    .setAudioAttributes(new AudioAttributes
+                            .Builder()
+                            .setFlags(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build())
+                    .build();
         } else {
-            mPlayer.setAudioStreamType(AudioManager.STREAM_NOTIFICATION);
+            mSoundPool = new SoundPool(5, AudioManager.STREAM_NOTIFICATION, 0);
+
         }
-        mPlayer.setOnPreparedListener(this);
+        try (AssetFileDescriptor afd = context.getAssets().openFd("switch.mp3")) {
+            streamSwitch = mSoundPool.load(afd, 1);
+        } catch (IOException e) {
+            ErrorsObservable.notify(e, false);
+        }
+
+        try (AssetFileDescriptor afd = context.getAssets().openFd("idok.wav")) {
+            streamIdOk = mSoundPool.load(afd, 1);
+        } catch (IOException e) {
+            ErrorsObservable.notify(e, false);
+        }
+
+        try (AssetFileDescriptor afd = context.getAssets().openFd("gpsok.wav")) {
+            streamGpsOk = mSoundPool.load(afd, 1);
+        } catch (IOException e) {
+            ErrorsObservable.notify(e, false);
+        }
+
+        try (AssetFileDescriptor afd = context.getAssets().openFd("uploadok.mp3")) {
+            streamUploadOk = mSoundPool.load(afd, 1);
+        } catch (IOException e) {
+            ErrorsObservable.notify(e, false);
+        }
+
+        try (AssetFileDescriptor afd = context.getAssets().openFd("uploadfail.mp3")) {
+            streamUploadFail = mSoundPool.load(afd, 1);
+        } catch (IOException e) {
+            ErrorsObservable.notify(e, false);
+        }
     }
 
-    public static MediaPlayerUtils getInstance() {
+    public static MediaPlayerUtils getInstance(Context context) {
         if (instance == null) {
-            instance = new MediaPlayerUtils();
+            instance = new MediaPlayerUtils(context);
         }
         return instance;
     }
 
-    @Override
-    public void onPrepared(MediaPlayer player) {
-        player.start();
-    }
-
-    private void stop() {
-        if (mPlayer.isPlaying()) {
-            mPlayer.stop();
+    private void stopAll() {
+        while (!played.isEmpty()) {
+            Integer id = played.iterator().next();
+            mSoundPool.stop(id);
+            played.remove(id);
         }
-        mPlayer.reset();
     }
 
-    private void play(Context context, String file) {
-        stop();
+    private void play(Context context, int streamID) {
+        stopAll();
         AudioManager am = (AudioManager) context.getSystemService(AUDIO_SERVICE);
 
         if (am == null)
@@ -59,34 +95,27 @@ public class MediaPlayerUtils implements MediaPlayer.OnPreparedListener {
             return;
         }
 
-        try (AssetFileDescriptor afd = context.getAssets().openFd(file)) {
-            stop();
-            mPlayer.setLooping(false);
-            mPlayer.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
-            mPlayer.prepareAsync();
-        } catch (IOException e) {
-            ErrorsObservable.notify(e, false);
-        }
+        played.add(mSoundPool.play(streamID, 1, 1, 0, 0, 1));
     }
 
     public void playSwitchSound(Context context) {
-        play(context, "switch.mp3");
+        play(context, streamSwitch);
     }
 
     public void playTrackID(Context context) {
-        play(context, "idok.wav");
+        play(context, streamIdOk);
     }
 
     public void playGpsOk(Context context) {
-        play(context, "gpsok.wav");
+        play(context, streamGpsOk);
     }
 
     public void playUploadOk(Context context) {
-        play(context, "uploadok.mp3");
+        play(context, streamUploadOk);
     }
 
     public void playUploadFail(Context context) {
-        play(context, "uploadfail.mp3");
+        play(context, streamUploadFail);
     }
 
 }

@@ -120,7 +120,7 @@ public class BackgroundService extends Service {
             return;
         enqueueUploadLocation(this, location);
         if (mSound.isOn()) {
-            MediaPlayerUtils.getInstance().playGpsOk(this);
+            MediaPlayerUtils.getInstance(this).playGpsOk(this);
         }
     }
 
@@ -176,9 +176,9 @@ public class BackgroundService extends Service {
         UploadJobService.Status status = UploadJobService.uploadStatus();
         if (mSound.isOn()) {
             if (status == UploadJobService.Status.ERROR)
-                MediaPlayerUtils.getInstance().playUploadFail(this);
+                MediaPlayerUtils.getInstance(this).playUploadFail(this);
             else if (status == UploadJobService.Status.EMPTY)
-                MediaPlayerUtils.getInstance().playUploadOk(this);
+                MediaPlayerUtils.getInstance(this).playUploadOk(this);
         }
         if (status == UploadJobService.Status.ERROR) {
             RetryUploadAlarm.startRetryUploadAlarmmanager(this);

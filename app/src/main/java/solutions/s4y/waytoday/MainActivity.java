@@ -177,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
     public void switchOn(View view) {
         if (isSwitching) return;
         startService();
-        MediaPlayerUtils.getInstance().playSwitchSound(this);
+        MediaPlayerUtils.getInstance(this).playSwitchSound(this);
         isSwitching = true;
         mImageBtnOff.startAnimation(mSwitchAnimationFadeIn);
         mImageBtnOn.startAnimation(mSwitchAnimationFadeOut);
@@ -209,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
     public void switchOff(View view) {
         if (isSwitching) return;
         stopService();
-        MediaPlayerUtils.getInstance().playSwitchSound(this);
+        MediaPlayerUtils.getInstance(this).playSwitchSound(this);
         isSwitching = true;
         mImageBtnOff.startAnimation(mSwitchAnimationFadeOut);
         mImageBtnOn.startAnimation(mSwitchAnimationFadeIn);
@@ -347,7 +347,7 @@ public class MainActivity extends AppCompatActivity {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(trackID -> {
                     updateTrackID();
-                    MediaPlayerUtils.getInstance().playTrackID(this);
+                    MediaPlayerUtils.getInstance(this).playTrackID(this);
                 }));
         resumeDisposables.add(ErrorsObservable
                 .subject
