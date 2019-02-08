@@ -109,7 +109,7 @@ public class IDServiceTest {
 
     @Test
     public void idService_shouldPassOnTestHostWithEmptyPrevID() throws Exception {
-        when(isTracking.get()).thenReturn(false);
+        when(isTracking.isOn()).thenReturn(false);
         when(trackID.get()).thenReturn("");
 
         //noinspection unchecked
@@ -125,7 +125,7 @@ public class IDServiceTest {
 
     @Test
     public void idService_shouldPassOnTestHostWithExistingPrevID() throws Exception {
-        when(isTracking.get()).thenReturn(false);
+        when(isTracking.isOn()).thenReturn(false);
 
         //noinspection unchecked
         disposable.add(ErrorsObservable.subject.subscribe(mockErrorObserver));
