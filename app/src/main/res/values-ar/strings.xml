@@ -24,4 +24,6 @@
     <string name="share_title">شارك عبر…</string>
     <string name="share_link"><![CDATA[تتبع موقعي بالنقر https://way.today/#%1$s!30m]]></string>
     <string name="share_subj">Way.Today location note</string>
+    <string name="text_off">ايقاف</string>
+    <string name="text_on">على</string>
 </resources>

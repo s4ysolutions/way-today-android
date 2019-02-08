@@ -111,6 +111,10 @@ public class MainActivity extends AppCompatActivity {
     ImageView mBtnSoundOn;
     @BindView(R.id.btn_sound_off)
     ImageView mBtnSoundOff;
+    @BindView(R.id.text_on)
+    TextView mTextOn;
+    @BindView(R.id.text_off)
+    TextView mTextOff;
 
     private CompositeDisposable resumeDisposables;
     private GestureDetectorCompat mDetector;
@@ -118,6 +122,8 @@ public class MainActivity extends AppCompatActivity {
     private Animation mSwitchAnimationFadeIn;
     private Animation mLedGpsNewAnimationFadeOut;
     private Animation mLedUploadingAnimationFadeOut;
+    private Animation mTextOnAnimationFadeOut;
+    private Animation mTextOffAnimationFadeOut;
     private boolean isSwitching;
     SparseArray<PermissionRequest> mPermissionRequests = new SparseArray<>(2);
     private BackgroundService mBackgroundService;
@@ -173,12 +179,36 @@ public class MainActivity extends AppCompatActivity {
         return super.onTouchEvent(event);
     }
 
+    private Animation.AnimationListener textOnOffAnimationListener = new Animation.AnimationListener() {
+        @Override
+        public void onAnimationStart(Animation animation) {
+
+        }
+
+        @Override
+        public void onAnimationEnd(Animation animation) {
+            mTextOff.setVisibility(View.GONE);
+            mTextOn.setVisibility(View.GONE);
+        }
+
+        @Override
+        public void onAnimationRepeat(Animation animation) {
+
+        }
+    };
+
+    private boolean mLedGpsNewAnymated = false;
+    private static final float alphaIDinProgress = 0.3f;
+    private static final float alphaIDnotInProgress = 0.9f;
+
     @OnClick(R.id.switch_on)
     public void switchOn(View view) {
         if (isSwitching) return;
         startService();
         MediaPlayerUtils.getInstance(this).playSwitchSound(this);
         isSwitching = true;
+        mImageBtnOff.setVisibility(View.VISIBLE);
+//        mImageBtnOff.setAlpha(0f);
         mImageBtnOff.startAnimation(mSwitchAnimationFadeIn);
         mImageBtnOn.startAnimation(mSwitchAnimationFadeOut);
         mSwitchAnimationFadeOut.setAnimationListener(new Animation.AnimationListener() {
@@ -199,38 +229,10 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-    }
-
-    private boolean mLedGpsNewAnymated = false;
-    private static final float alphaIDinProgress = 0.3f;
-    private static final float alphaIDnotInProgress = 0.9f;
-
-    @OnClick(R.id.switch_off)
-    public void switchOff(View view) {
-        if (isSwitching) return;
-        stopService();
-        MediaPlayerUtils.getInstance(this).playSwitchSound(this);
-        isSwitching = true;
-        mImageBtnOff.startAnimation(mSwitchAnimationFadeOut);
-        mImageBtnOn.startAnimation(mSwitchAnimationFadeIn);
-        mSwitchAnimationFadeOut.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                isSwitching = false;
-                mSwitchAnimationFadeOut.setAnimationListener(null);
-                mIsActive.set(false);
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-
-            }
-        });
+        mTextOff.setVisibility(View.GONE);
+        mTextOn.setVisibility(View.VISIBLE);
+        mTextOn.setAlpha(1);
+        mTextOn.startAnimation(mTextOnAnimationFadeOut);
     }
 
     private void updateUserStrategyChooser() {
@@ -359,6 +361,39 @@ public class MainActivity extends AppCompatActivity {
         updateAllViews();
     }
 
+    @OnClick(R.id.switch_off)
+    public void switchOff(View view) {
+        if (isSwitching) return;
+        stopService();
+        MediaPlayerUtils.getInstance(this).playSwitchSound(this);
+        isSwitching = true;
+        mImageBtnOn.setVisibility(View.VISIBLE);
+        //    mImageBtnOn.setAlpha(0f);
+        mImageBtnOn.startAnimation(mSwitchAnimationFadeIn);
+        mImageBtnOff.startAnimation(mSwitchAnimationFadeOut);
+        mSwitchAnimationFadeOut.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                isSwitching = false;
+                mSwitchAnimationFadeOut.setAnimationListener(null);
+                mIsActive.set(false);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+        mTextOff.setVisibility(View.VISIBLE);
+        mTextOff.setAlpha(1);
+        mTextOff.startAnimation(mTextOffAnimationFadeOut);
+    }
+
     private void updateAllViews() {
         updateUserStrategyChooser();
         updateSwitch();
@@ -366,6 +401,7 @@ public class MainActivity extends AppCompatActivity {
         updateTrackID();
         updateLedUploading();
         updateSound();
+        hideOnOff();
     }
 
     @OnClick(R.id.btn_track_id)
@@ -433,6 +469,11 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    private void hideOnOff() {
+        mTextOn.setVisibility(View.GONE);
+        mTextOff.setVisibility(View.GONE);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -451,8 +492,12 @@ public class MainActivity extends AppCompatActivity {
         mSwitchAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout400);
         mLedGpsNewAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout300);
         mLedGpsNewAnimationFadeOut.setAnimationListener(ledGpsNewAnimationListener);
-        mLedUploadingAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout750);
+        mLedUploadingAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout400);
         mLedUploadingAnimationFadeOut.setAnimationListener(ledUploadingAnimationListener);
+        mTextOnAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout_on_off);
+        mTextOnAnimationFadeOut.setAnimationListener(textOnOffAnimationListener);
+        mTextOffAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout_on_off);
+        mTextOffAnimationFadeOut.setAnimationListener(textOnOffAnimationListener);
     }
 
     private void updateLedGpsNew() {

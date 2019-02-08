@@ -230,13 +230,36 @@
                     android:id="@+id/switch_off"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    app:srcCompat="@drawable/ic_switch_off" />
+                    app:srcCompat="@drawable/ic_switch_on" />
 
                 <ImageView
                     android:id="@+id/switch_on"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    app:srcCompat="@drawable/ic_switch_on" />
+                    app:srcCompat="@drawable/ic_switch_off" />
+
+                <TextView
+                    android:id="@+id/text_on"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom|left"
+                    android:layout_marginLeft="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/text_on"
+                    android:textColor="#FF00A185"
+                    android:textSize="30sp" />
+
+                <TextView
+                    android:id="@+id/text_off"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="right|top"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginRight="8dp"
+                    android:text="@string/text_off"
+                    android:textColor="#FFF15A29"
+                    android:textSize="30sp"
+                    android:visibility="visible" />
 
             </FrameLayout>
 

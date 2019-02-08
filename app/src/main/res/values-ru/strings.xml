@@ -24,5 +24,7 @@
     <string name="share_title">Отправить местоположение…</string>
     <string name="share_link"><![CDATA[Мое положение доступно по ссылке https://way.today/#%1$s!30m или по коду %1$s на сайте простопуть.рф]]></string>
     <string name="share_subj">Ссобщение с сервиса Way.Today</string>
+    <string name="text_on">Вкл</string>
+    <string name="text_off">Выкл</string>
 
 </resources>
