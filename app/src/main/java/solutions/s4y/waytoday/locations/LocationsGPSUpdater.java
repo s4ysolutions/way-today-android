@@ -17,8 +17,9 @@ import solutions.s4y.waytoday.permissions.RestartOnGivenPermssion;
 import solutions.s4y.waytoday.strategies.Strategy;
 
 public class LocationsGPSUpdater implements LocationsUpdater {
-    private static final String LT = LocationUpdatesListener.class.getSimpleName();
+    private static final String LT = LocationsTracker.class.getSimpleName();
     @VisibleForTesting
+    private
     LocationManager mLocationManager;
 
     public LocationsGPSUpdater(@NonNull Context context) {
@@ -36,7 +37,7 @@ public class LocationsGPSUpdater implements LocationsUpdater {
     }
 
     @Override
-    public void unregisterListener(@NonNull LocationListener listener) {
+    public void cancelLocationUpdates(@NonNull LocationListener listener) {
         if (mLocationManager == null) {
             ErrorsObservable.toast(R.string.no_location_manager);
             return;
@@ -68,7 +69,8 @@ public class LocationsGPSUpdater implements LocationsUpdater {
                 return;
             }
             if (BuildConfig.DEBUG) {
-                Log.d(LT, "requestLocationUpdates " + mStrategy.getMinTime() + " ms");
+                Log.d(LT, "requestLocationUpdates " +
+                        mStrategy.getMinTime() + " ms on SDK=" + android.os.Build.VERSION.SDK_INT);
             }
             try {
                 mLocationManager.requestLocationUpdates(
