@@ -8,15 +8,14 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import io.reactivex.subjects.PublishSubject;
 import solutions.s4y.waytoday.BuildConfig;
-import solutions.s4y.waytoday.errors.ErrorsObservable;
 import solutions.s4y.waytoday.grpc.LocationOuterClass;
 import solutions.s4y.waytoday.strategies.Strategy;
 
-public class LocationUpdatesListener {
+public class LocationsTracker {
     public static final PublishSubject<Location> subjectLocations = PublishSubject.create();
     public static final PublishSubject<TrackingState> subjectTrackingState = PublishSubject.create();
     private static final String LT = LocationOuterClass.Location.class.getSimpleName();
-    public static boolean isSuspended;
+    public static boolean isSuspended = true;
     static private final LocationListener locationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
@@ -28,38 +27,26 @@ public class LocationUpdatesListener {
 
         @Override
         public void onStatusChanged(String provider, int status, Bundle extras) {
-            ErrorsObservable.notify(
-                    "LocationListener.onStatusChanged: " + status,
-                    BuildConfig.DEBUG);
         }
 
         @Override
         public void onProviderEnabled(String provider) {
-            if (BuildConfig.DEBUG) {
-                Log.d(LT, "onProviderEnabled");
-            }
             isSuspended = false;
             subjectTrackingState.onNext(new TrackingState());
         }
 
         @Override
         public void onProviderDisabled(String provider) {
-            if (BuildConfig.DEBUG) {
-                Log.d(LT, "onProviderDisabled");
-            }
             isSuspended = true;
             subjectTrackingState.onNext(new TrackingState());
         }
     };
-    static private final RequestUpdatesListener requestListener = new RequestUpdatesListener() {
-        @Override
-        public void onRequestResult(boolean success) {
-            if (BuildConfig.DEBUG) {
-                Log.d(LT, "onRequestResult: " + success);
-            }
-            isSuspended = !success;
-            subjectTrackingState.onNext(new TrackingState());
+    static private final RequestUpdatesListener requestListener = success -> {
+        if (BuildConfig.DEBUG) {
+            Log.d(LT, "onRequestResult: " + success);
         }
+        isSuspended = !success;
+        subjectTrackingState.onNext(new TrackingState());
     };
     public static boolean isUpdating;
     private static LocationsUpdater updater;
@@ -69,9 +56,9 @@ public class LocationUpdatesListener {
             Log.d(LT, "requestStart each " + strategy.getMinTime() + " ms");
         }
         stop();
-        LocationUpdatesListener.updater = updater;
+        LocationsTracker.updater = updater;
         isUpdating = true;
-        isSuspended = false;
+        isSuspended = true;
         subjectTrackingState.onNext(new TrackingState());
         updater.requestLocationUpdates(strategy, locationListener, requestListener);
     }
@@ -81,7 +68,7 @@ public class LocationUpdatesListener {
             Log.d(LT, "stop");
         }
         if (updater != null) {
-            updater.unregisterListener(locationListener);
+            updater.cancelLocationUpdates(locationListener);
             updater = null;
         }
         if (isUpdating) {
@@ -95,8 +82,8 @@ public class LocationUpdatesListener {
         final boolean isSuspended;
 
         TrackingState() {
-            this.isUpdating = LocationUpdatesListener.isUpdating;
-            this.isSuspended = LocationUpdatesListener.isSuspended;
+            this.isUpdating = LocationsTracker.isUpdating;
+            this.isSuspended = LocationsTracker.isSuspended;
         }
     }
 }
