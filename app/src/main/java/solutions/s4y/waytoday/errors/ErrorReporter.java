@@ -26,7 +26,12 @@ public class ErrorReporter { // for testing purpose
         }
         if (err.th != null) {
             Log.e("WT message", err.getMessage(), err.th);
-            Crashlytics.logException(err.th);
+            try {
+                Crashlytics.logException(err.th);
+            } catch (IllegalStateException e) {
+                // unit tests
+                Log.w("WT message", e);
+            }
         }
     }
 }
