@@ -148,6 +148,95 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    // for mocking purposes
+    protected void setBinder(IBinder binder) {
+        mBackgroundService = ((BackgroundService.LocationsServiceBinder) binder).getService();
+        if (sHasFocus)
+            mBackgroundService.removeFromForeground();
+        else
+            mBackgroundService.putInForeground();
+        updateLedBackground();
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        ((WTApplication) getApplication()).getAppComponent().inject(this);
+        setContentView(R.layout.activity_main);
+        ButterKnife.bind(this);
+        mTextViewTitlePrev3.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitlePrev2.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitlePrev1.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitleNext1.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitleNext2.setTag(R.id.TAG_IS_TITLE, true);
+        mTextViewTitleNext3.setTag(R.id.TAG_IS_TITLE, true);
+        mDetector = new GestureDetectorCompat(this,
+                new FrequencyGestureListener(mViewGestureController, mUserStrategyFrequency));
+        mSwitchAnimationFadeIn = AnimationUtils.loadAnimation(this, R.anim.fadein400);
+        mSwitchAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout400);
+        mLedGpsNewAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout300);
+        mLedGpsNewAnimationFadeOut.setAnimationListener(ledGpsNewAnimationListener);
+        mLedUploadingAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout400);
+        mLedUploadingAnimationFadeOut.setAnimationListener(ledUploadingAnimationListener);
+        mTextOnAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout_on_off);
+        mTextOnAnimationFadeOut.setAnimationListener(textOnOffAnimationListener);
+        mTextOffAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout_on_off);
+        mTextOffAnimationFadeOut.setAnimationListener(textOnOffAnimationListener);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        Intent intent = new Intent(this, BackgroundService.class);
+        bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
+
+        if (BuildConfig.DEBUG) {
+            if (resumeDisposables != null) {
+                ErrorsObservable.notify(new Exception("resumeDisposables != null"));
+            }
+        }
+        resumeDisposables = new CompositeDisposable();
+        resumeDisposables.add(mUserStrategyFrequency
+                .subject
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(userStrategy -> updateUserStrategyChooser()));
+        resumeDisposables.add(mIsActive
+                .subject
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(userStrategy -> updateSwitch()));
+        resumeDisposables.add(LocationsTracker
+                .subjectTrackingState
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(state -> updateLedBackground()));
+        resumeDisposables.add(LocationsTracker
+                .subjectLocations
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(state -> updateLedGpsNew()));
+        resumeDisposables.add(PermissionRequestObservable
+                .subject
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::onPermissionRequest));
+        resumeDisposables.add(UploadJobService
+                .subjectStatus
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(status -> this.updateLedUploading()));
+        resumeDisposables.add(mTrackID
+                .subject
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(trackID -> {
+                    updateTrackID();
+                    MediaPlayerUtils.getInstance(this).playTrackID(this);
+                }));
+        resumeDisposables.add(ErrorsObservable
+                .subject
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(ignored -> updateAllViews()));
+        if (mTrackID.isNotSet()) {
+            IDService.enqueueRetrieveId(this, "");
+        }
+        updateAllViews();
+    }
+
     @Override
     protected void onPause() {
         if (resumeDisposables == null) {
@@ -606,6 +695,7 @@ public class MainActivity extends AppCompatActivity {
                 } else {
                     // isScanRequestAbortedBecauseOfPermission=true;
                     int code = (int) Math.round(Math.random() * 1000);
+                    mPermissionRequests.put(code, request);
                     ActivityCompat.requestPermissions(
                             this,
                             new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, code);
