@@ -9,9 +9,10 @@ import dagger.Provides;
 import solutions.s4y.waytoday.preferences.PreferenceGRPCHost;
 import solutions.s4y.waytoday.preferences.PreferenceGRPCPort;
 import solutions.s4y.waytoday.preferences.PreferenceIsTracking;
+import solutions.s4y.waytoday.preferences.PreferenceSound;
 import solutions.s4y.waytoday.preferences.PreferenceTrackID;
+import solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency;
 
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
 @Module
@@ -19,7 +20,8 @@ class DaggerTestPreferencesModule {
     @Provides
     @Singleton
     PreferenceIsTracking providePreferenceIsTracking(SharedPreferences sp) {
-        return mock(PreferenceIsTracking.class);
+        PreferenceIsTracking pref = new PreferenceIsTracking(sp);
+        return spy(pref);
     }
 
     @Provides
@@ -32,12 +34,29 @@ class DaggerTestPreferencesModule {
     @Provides
     @Singleton
     PreferenceGRPCHost providePreferenceGRPCHost(SharedPreferences sp) {
-        return mock(PreferenceGRPCHost.class);
+        PreferenceGRPCHost pref = new PreferenceGRPCHost(sp);
+        return spy(pref);
     }
 
     @Provides
     @Singleton
     PreferenceGRPCPort providePreferenceGRPCPort(SharedPreferences sp) {
-        return mock(PreferenceGRPCPort.class);
+        PreferenceGRPCPort pref = new PreferenceGRPCPort(sp);
+        return spy(pref);
     }
+
+    @Provides
+    @Singleton
+    PreferenceUpdateFrequency providePreferenceUpdate(SharedPreferences sp) {
+        PreferenceUpdateFrequency pref = new PreferenceUpdateFrequency(sp);
+        return spy(pref);
+    }
+
+    @Provides
+    @Singleton
+    PreferenceSound providePreferenceSound(SharedPreferences sp) {
+        PreferenceSound pref = new PreferenceSound(sp);
+        return spy(pref);
+    }
+
 }

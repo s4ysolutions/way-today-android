@@ -1,6 +1,7 @@
 package solutions.s4y.waytoday;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
@@ -36,7 +37,7 @@ import io.reactivex.disposables.CompositeDisposable;
 import solutions.s4y.waytoday.background.BackgroundService;
 import solutions.s4y.waytoday.errors.ErrorsObservable;
 import solutions.s4y.waytoday.idservice.IDService;
-import solutions.s4y.waytoday.locations.LocationUpdatesListener;
+import solutions.s4y.waytoday.locations.LocationsTracker;
 import solutions.s4y.waytoday.mainactivity.FrequencyGestureListener;
 import solutions.s4y.waytoday.permissions.PermissionRequest;
 import solutions.s4y.waytoday.permissions.PermissionRequestObservable;
@@ -133,12 +134,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onServiceConnected(ComponentName className,
                                        @NonNull IBinder binder) {
-            mBackgroundService = ((BackgroundService.LocationsServiceBinder) binder).getService();
-            if (sHasFocus)
-                mBackgroundService.removeFromForeground();
-            else
-                mBackgroundService.putInForeground();
-            updateLedBackground();
+            setBinder(binder);
         }
 
         @Override
@@ -366,8 +362,8 @@ public class MainActivity extends AppCompatActivity {
             Log.d(LT,
                     String.format("updateLedBackground: mBackgroundService=%b, isUpdating=%b, isSuspended=%b",
                             mBackgroundService != null,
-                            LocationUpdatesListener.isUpdating,
-                            LocationUpdatesListener.isSuspended
+                            LocationsTracker.isUpdating,
+                            LocationsTracker.isSuspended
                     ));
         }
         if (mBackgroundService == null) {
@@ -376,8 +372,8 @@ public class MainActivity extends AppCompatActivity {
             mLedTrackingSuspended.setVisibility(View.GONE);
             mLedTrackingOn.setVisibility(View.GONE);
         } else {
-            if (LocationUpdatesListener.isUpdating) {
-                if (LocationUpdatesListener.isSuspended) {
+            if (LocationsTracker.isUpdating) {
+                if (LocationsTracker.isSuspended) {
                     mLedTrackingOff.setVisibility(View.GONE);
                     mLedTrackingUnknown.setVisibility(View.GONE);
                     mLedTrackingSuspended.setVisibility(View.VISIBLE);
@@ -395,59 +391,6 @@ public class MainActivity extends AppCompatActivity {
                 mLedTrackingOn.setVisibility(View.GONE);
             }
         }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        Intent intent = new Intent(this, BackgroundService.class);
-        bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
-
-        if (BuildConfig.DEBUG) {
-            if (resumeDisposables != null) {
-                ErrorsObservable.notify(new Exception("resumeDisposables != null"));
-            }
-        }
-        resumeDisposables = new CompositeDisposable();
-        resumeDisposables.add(mUserStrategyFrequency
-                .subject
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(userStrategy -> updateUserStrategyChooser()));
-        resumeDisposables.add(mIsActive
-                .subject
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(userStrategy -> updateSwitch()));
-        resumeDisposables.add(LocationUpdatesListener
-                .subjectTrackingState
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(state -> updateLedBackground()));
-        resumeDisposables.add(LocationUpdatesListener
-                .subjectLocations
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(state -> updateLedGpsNew()));
-        resumeDisposables.add(PermissionRequestObservable
-                .subject
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(this::onPermissionRequest));
-        resumeDisposables.add(UploadJobService
-                .subjectStatus
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(status -> this.updateLedUploading()));
-        resumeDisposables.add(mTrackID
-                .subject
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(trackID -> {
-                    updateTrackID();
-                    MediaPlayerUtils.getInstance(this).playTrackID(this);
-                }));
-        resumeDisposables.add(ErrorsObservable
-                .subject
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(ignored -> updateAllViews()));
-        if (mTrackID.isNotSet()) {
-            IDService.enqueueRetrieveId(this, "");
-        }
-        updateAllViews();
     }
 
     @OnClick(R.id.switch_off)
@@ -561,32 +504,6 @@ public class MainActivity extends AppCompatActivity {
     private void hideOnOff() {
         mTextOn.setVisibility(View.GONE);
         mTextOff.setVisibility(View.GONE);
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        ((WTApplication) getApplication()).getAppComponent().inject(this);
-        setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
-        mTextViewTitlePrev3.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitlePrev2.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitlePrev1.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitleNext1.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitleNext2.setTag(R.id.TAG_IS_TITLE, true);
-        mTextViewTitleNext3.setTag(R.id.TAG_IS_TITLE, true);
-        mDetector = new GestureDetectorCompat(this,
-                new FrequencyGestureListener(mViewGestureController, mUserStrategyFrequency));
-        mSwitchAnimationFadeIn = AnimationUtils.loadAnimation(this, R.anim.fadein400);
-        mSwitchAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout400);
-        mLedGpsNewAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout300);
-        mLedGpsNewAnimationFadeOut.setAnimationListener(ledGpsNewAnimationListener);
-        mLedUploadingAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout400);
-        mLedUploadingAnimationFadeOut.setAnimationListener(ledUploadingAnimationListener);
-        mTextOnAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout_on_off);
-        mTextOnAnimationFadeOut.setAnimationListener(textOnOffAnimationListener);
-        mTextOffAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout_on_off);
-        mTextOffAnimationFadeOut.setAnimationListener(textOnOffAnimationListener);
     }
 
     private void updateLedGpsNew() {

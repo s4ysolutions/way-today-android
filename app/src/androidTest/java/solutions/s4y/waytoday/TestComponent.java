@@ -5,6 +5,7 @@ import javax.inject.Singleton;
 import dagger.Component;
 import solutions.s4y.waytoday.grpc.DaggerGRPCChannelProviderModule;
 import solutions.s4y.waytoday.idservice.IDServiceTest;
+import solutions.s4y.waytoday.mainactivity.PermissionsOnFirstLaunchTest;
 
 @Singleton
 @Component(modules = {
@@ -14,6 +15,6 @@ import solutions.s4y.waytoday.idservice.IDServiceTest;
         DaggerGRPCChannelProviderModule.class
 })
 public interface TestComponent extends AppComponent {
-
+    void inject(PermissionsOnFirstLaunchTest test);
     void inject(IDServiceTest test);
 }

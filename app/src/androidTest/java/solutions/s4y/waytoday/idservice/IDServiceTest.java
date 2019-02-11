@@ -18,7 +18,6 @@ import androidx.test.filters.LargeTest;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
 import solutions.s4y.waytoday.TestComponent;
-import solutions.s4y.waytoday.Utils;
 import solutions.s4y.waytoday.WTApplication;
 import solutions.s4y.waytoday.errors.ErrorNotification;
 import solutions.s4y.waytoday.errors.ErrorsObservable;
@@ -26,6 +25,7 @@ import solutions.s4y.waytoday.preferences.PreferenceGRPCHost;
 import solutions.s4y.waytoday.preferences.PreferenceGRPCPort;
 import solutions.s4y.waytoday.preferences.PreferenceIsTracking;
 import solutions.s4y.waytoday.preferences.PreferenceTrackID;
+import solutions.s4y.waytoday.utils.Admin;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -65,8 +65,8 @@ public class IDServiceTest {
     @Before
     public void setUp() throws Exception {
         disposable = new CompositeDisposable();
-        Utils.cleanDb();
-        Utils.randReset();
+        Admin.cleanDb();
+        Admin.randReset();
 
         WTApplication application = ApplicationProvider.getApplicationContext();
         TestComponent component = (TestComponent) application.getAppComponent();
@@ -77,7 +77,7 @@ public class IDServiceTest {
         reset(grpcPort);
         reset(mockErrorObserver);
 
-        when(grpcHost.get()).thenReturn(Utils.TEST_HOST);
+        when(grpcHost.get()).thenReturn(Admin.TEST_HOST);
         when(grpcPort.get()).thenReturn(9001);
     }
 
@@ -118,7 +118,7 @@ public class IDServiceTest {
         WTApplication application = ApplicationProvider.getApplicationContext();
 
         IDService.enqueueRetrieveId(application, "");
-        verify(trackID, timeout(5000)).set(Utils.FIRST_RAND_ID);
+        verify(trackID, timeout(5000)).set(Admin.FIRST_RAND_ID);
         //noinspection unchecked
         verify(mockErrorObserver, never()).accept(any(ErrorNotification.class));
     }
@@ -133,8 +133,8 @@ public class IDServiceTest {
         WTApplication application = ApplicationProvider.getApplicationContext();
 
         IDService.enqueueRetrieveId(application, "");
-        verify(trackID, timeout(5000)).set(Utils.FIRST_RAND_ID);
-        assertThat(trackID.get()).isEqualTo(Utils.FIRST_RAND_ID);
+        verify(trackID, timeout(5000)).set(Admin.FIRST_RAND_ID);
+        assertThat(trackID.get()).isEqualTo(Admin.FIRST_RAND_ID);
         //noinspection unchecked
         verify(mockErrorObserver, never()).accept(any(ErrorNotification.class));
     }
