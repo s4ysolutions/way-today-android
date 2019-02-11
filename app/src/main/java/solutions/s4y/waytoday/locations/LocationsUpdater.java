@@ -10,5 +10,6 @@ public interface LocationsUpdater {
             @NonNull Strategy strategy,
             @NonNull LocationListener locationListener,
             @NonNull RequestUpdatesListener requestListener);
-    void unregisterListener(@NonNull LocationListener listener);
+
+    void cancelLocationUpdates(@NonNull LocationListener listener);
 }
