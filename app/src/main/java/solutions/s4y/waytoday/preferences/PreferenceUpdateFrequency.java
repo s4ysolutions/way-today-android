@@ -8,7 +8,8 @@ import solutions.s4y.waytoday.R;
 
 public class PreferenceUpdateFrequency extends BaseStringPreference {
     static final String key = "freq";
-    PreferenceUpdateFrequency(@NonNull SharedPreferences preferences) {
+
+    public PreferenceUpdateFrequency(@NonNull SharedPreferences preferences) {
         super(preferences, key, Frequencies.SEC1.toString());
     }
 
