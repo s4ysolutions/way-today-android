@@ -15,8 +15,8 @@ import androidx.annotation.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
 import solutions.s4y.waytoday.MainActivity;
 import solutions.s4y.waytoday.WTApplication;
-import solutions.s4y.waytoday.locations.LocationUpdatesListener;
 import solutions.s4y.waytoday.locations.LocationsGPSUpdater;
+import solutions.s4y.waytoday.locations.LocationsTracker;
 import solutions.s4y.waytoday.locations.LocationsUpdater;
 import solutions.s4y.waytoday.preferences.PreferenceIsTracking;
 import solutions.s4y.waytoday.preferences.PreferenceSound;
@@ -65,7 +65,7 @@ public class BackgroundService extends Service {
         gpsLocatonUpdater = new LocationsGPSUpdater(this);
         mServiceDisposables = new CompositeDisposable();
         mServiceDisposables.add(
-                LocationUpdatesListener
+                LocationsTracker
                         .subjectLocations
                         .subscribe(this::onLocation));
         mServiceDisposables.add(
@@ -84,7 +84,7 @@ public class BackgroundService extends Service {
     @Override
     public void onDestroy() {
         mServiceDisposables.clear();
-        LocationUpdatesListener.stop();
+        LocationsTracker.stop();
         RetryUploadAlarm.cancelRetryUploadAlarmmanager(this);
         super.onDestroy();
     }
@@ -107,11 +107,11 @@ public class BackgroundService extends Service {
     }
 
     void startUpdateLocations() {
-        LocationUpdatesListener.requestStart(gpsLocatonUpdater, currentStrategy);
+        LocationsTracker.requestStart(gpsLocatonUpdater, currentStrategy);
     }
 
     void stopUpdateLocations() {
-        LocationUpdatesListener.stop();
+        LocationsTracker.stop();
     }
 
     void onLocation(Location location) {
@@ -159,7 +159,7 @@ public class BackgroundService extends Service {
 
 
     private void restartUpdateLocations() {
-        if (LocationUpdatesListener.isUpdating) {
+        if (LocationsTracker.isUpdating) {
             stopUpdateLocations();
             startUpdateLocations();
         }
@@ -187,4 +187,6 @@ public class BackgroundService extends Service {
             RetryUploadAlarm.cancelRetryUploadAlarmmanager(this);
         }
     }
+
+
 }
