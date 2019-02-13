@@ -7,7 +7,7 @@ import androidx.annotation.Nullable;
 import solutions.s4y.waytoday.R;
 
 public class PreferenceUpdateFrequency extends BaseStringPreference {
-    static final String key = "freq";
+    private static final String key = "freq";
 
     public PreferenceUpdateFrequency(@NonNull SharedPreferences preferences) {
         super(preferences, key, Frequencies.SEC1.toString());

@@ -318,6 +318,7 @@ public class MainActivity extends AppCompatActivity {
         mTextOn.setVisibility(View.VISIBLE);
         mTextOn.setAlpha(1);
         mTextOn.startAnimation(mTextOnAnimationFadeOut);
+        WTApplication.faOn();
     }
 
     private void updateUserStrategyChooser() {
@@ -424,6 +425,7 @@ public class MainActivity extends AppCompatActivity {
         mTextOff.setVisibility(View.VISIBLE);
         mTextOff.setAlpha(1);
         mTextOff.startAnimation(mTextOffAnimationFadeOut);
+        WTApplication.faOff();
     }
 
     private void updateAllViews() {
@@ -441,6 +443,7 @@ public class MainActivity extends AppCompatActivity {
         mBtnTrackID.setAlpha(alphaIDinProgress);
         mTextID.setAlpha(alphaIDinProgress);
         IDService.enqueueRetrieveId(this, mTrackID.get());
+        WTApplication.faRequestID();
     }
 
     private void updateTrackID() {
@@ -574,6 +577,7 @@ public class MainActivity extends AppCompatActivity {
     void onSoundOnClick(View v) {
         mSound.set(false);
         updateSound();
+        WTApplication.faSoundOn();
     }
 
     @SuppressWarnings("unused")
@@ -581,6 +585,7 @@ public class MainActivity extends AppCompatActivity {
     void onSoundOffClick(View v) {
         mSound.set(true);
         updateSound();
+        WTApplication.faSoundOff();
     }
 
     private void startService() {
@@ -616,6 +621,7 @@ public class MainActivity extends AppCompatActivity {
                     ActivityCompat.requestPermissions(
                             this,
                             new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, code);
+                    WTApplication.faNoPermission();
                 }
             }
         }
@@ -636,7 +642,6 @@ public class MainActivity extends AppCompatActivity {
     @OnClick(R.id.btn_share)
     public void onShareBtnClick(View v) {
         if (mTrackID.isNotSet()) return;
-
         String txt = String.format(getResources().getString(R.string.share_link), mTrackID.get());
         Intent sendIntent = new Intent();
         sendIntent.setAction(Intent.ACTION_SEND);
@@ -645,6 +650,7 @@ public class MainActivity extends AppCompatActivity {
         // sendIntent.setType("message/rfc822");
         sendIntent.setType("text/plain");
         startActivity(Intent.createChooser(sendIntent, getResources().getString(R.string.share_title)));
+        WTApplication.faShare();
     }
 
     @OnClick(R.id.btn_way_today)
@@ -652,6 +658,7 @@ public class MainActivity extends AppCompatActivity {
         if (mTrackID.isNotSet()) return;
         Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://way.today/#" + mTrackID.get()));
         startActivity(browserIntent);
+        WTApplication.faVisit();
     }
 
     @SuppressLint("MissingSuperCall")

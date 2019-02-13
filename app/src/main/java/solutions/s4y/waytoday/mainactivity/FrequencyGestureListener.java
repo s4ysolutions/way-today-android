@@ -10,7 +10,9 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import solutions.s4y.waytoday.BuildConfig;
 import solutions.s4y.waytoday.R;
+import solutions.s4y.waytoday.WTApplication;
 import solutions.s4y.waytoday.preferences.PreferenceUpdateFrequency;
+import solutions.s4y.waytoday.strategies.UserStrategy;
 
 public class FrequencyGestureListener extends GestureDetector.SimpleOnGestureListener {
     private static final String LT = FrequencyGestureListener.class.getSimpleName();
@@ -19,10 +21,13 @@ public class FrequencyGestureListener extends GestureDetector.SimpleOnGestureLis
     @NonNull
     private final ViewGroup parent;
 
+    private final UserStrategy userStrategy;
+
     public FrequencyGestureListener(@NonNull ViewGroup parent,
                                     @NonNull PreferenceUpdateFrequency preference) {
         this.preference = preference;
         this.parent = parent;
+        userStrategy = new UserStrategy(preference);
     }
 
     @Override
@@ -41,6 +46,7 @@ public class FrequencyGestureListener extends GestureDetector.SimpleOnGestureLis
             }
             preference.next();
         }
+        WTApplication.faFreqFling(userStrategy.getMinTime());
         return true;
     }
 
@@ -85,6 +91,7 @@ public class FrequencyGestureListener extends GestureDetector.SimpleOnGestureLis
                 }
             }
         }
+        WTApplication.faFreqTap(userStrategy.getMinTime());
         return super.onSingleTapUp(e);
     }
 }
