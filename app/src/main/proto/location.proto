@@ -6,8 +6,8 @@ package grpc;
 message Location {
     string ID = 1;
     string tid = 2;
-    uint64 lat = 3;
-    uint64 lon = 4;
+    int64 lat = 3;
+    int64 lon = 4;
     int64 alt = 5;
     int64 bear = 6;
     uint64 ts = 7;
