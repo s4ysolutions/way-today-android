@@ -7,7 +7,7 @@ android {
     defaultConfig {
         applicationId "solutions.s4y.waytoday"
         // 18 due test automator, can be 16
-        minSdkVersion 16
+        minSdkVersion 14
         targetSdkVersion 28
         // testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunner "solutions.s4y.waytoday.Runner"
