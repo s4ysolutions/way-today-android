@@ -3,8 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="solutions.s4y.waytoday"
     android:installLocation="internalOnly"
-    android:versionCode="51"
-    android:versionName="2.6">
+    android:versionCode="52"
+    android:versionName="2.7">
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
