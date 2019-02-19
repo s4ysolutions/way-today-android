@@ -44,7 +44,8 @@ class RetryUploadAlarm {
     }
 
     static void cancelRetryUploadAlarmmanager(Context context) {
-        if (sAlarmPIntent == null) return;
+        PendingIntent atomicPIntent = sAlarmPIntent;
+        if (atomicPIntent == null) return;
         try {
             Log.d(LT, "will do unregisterReceiver");
             context.unregisterReceiver(receiver);
@@ -54,7 +55,11 @@ class RetryUploadAlarm {
             ErrorsObservable.notify(arg, BuildConfig.DEBUG);
         }
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        alarmManager.cancel(sAlarmPIntent);
+        if (alarmManager != null) {
+            alarmManager.cancel(atomicPIntent);
+        } else {
+            ErrorsObservable.notify(new Exception("alarmManager == null"), BuildConfig.DEBUG);
+        }
         sAlarmPIntent = null;
     }
 
