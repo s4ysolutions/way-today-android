@@ -227,9 +227,14 @@ public class UploadJobService extends JobIntentService {
         enqueueUploadLocations(context);
     }
 
+    static private int sJobID = 1000;
     public static void enqueueUploadLocations(Context context) {
         Intent intent = new Intent(context, UploadJobService.class);
-        enqueueWork(context, UploadJobService.class, 1000, intent);
+        enqueueWork(context, UploadJobService.class, sJobID, intent);
+        if (sJobID < 2999)
+            sJobID++;
+        else
+            sJobID = 2000;
     }
 
     private static void notifyUpdateState() {
