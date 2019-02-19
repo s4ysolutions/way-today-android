@@ -44,17 +44,13 @@ public class IDService extends JobIntentService {
         sProgress = progress;
     }
 
-    static private int sJobID = 1000;
+    static private final int sJobID = 1000;
 
     public static void enqueueRetrieveId(Context context, String prevID) {
         if (!isProgress()) {
             Intent intent = new Intent(context, IDService.class);
             intent.putExtra(EXTRA_PREVID, prevID);
             enqueueWork(context, IDService.class, sJobID, intent);
-            if (sJobID < 1999)
-                sJobID++;
-            else
-                sJobID = 1000;
         }
     }
 
