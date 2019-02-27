@@ -21,11 +21,13 @@ android {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             buildConfigField "int", "GRPC_PORT", "9101"
+            buildConfigField "int", "GRPC_PORT_PLAIN", "9001"
             buildConfigField "String", "GRPC_HOST", "\"tracker.way.today\""
         }
         debug {
             testCoverageEnabled false
             buildConfigField "int", "GRPC_PORT", "9101"
+            buildConfigField "int", "GRPC_PORT_PLAIN", "9001"
             buildConfigField "String", "GRPC_HOST", "\"tracker.way.today\""
         }
     }
