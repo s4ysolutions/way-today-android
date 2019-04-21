@@ -16,9 +16,9 @@
     <uses-permission android:name="com.samsung.android.providers.context.permission.WRITE_USE_APP_FEATURE_SURVEY" />
 
     <uses-feature android:name="android.hardware.location.network" />
-    <uses-feature
+    <!-- uses-feature
         android:name="com.sec.feature.spen_usp"
-        android:required="true" />
+        android:required="true" /-->
 
     <application
         android:name=".WTApplication"
