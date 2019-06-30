@@ -1,12 +1,19 @@
 package s4y.waytoday.locations;
 
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import io.reactivex.subjects.PublishSubject;
+import mad.location.manager.lib.Filters.GPSAccKalmanFilter;
 import s4y.waytoday.BuildConfig;
 import s4y.waytoday.grpc.LocationOuterClass;
 import s4y.waytoday.strategies.Strategy;
@@ -15,12 +22,36 @@ public class LocationsTracker {
     public static final PublishSubject<Location> subjectLocations = PublishSubject.create();
     public static final PublishSubject<TrackingState> subjectTrackingState = PublishSubject.create();
     private static final String LT = LocationOuterClass.Location.class.getSimpleName();
-    public static boolean isSuspended = true;
+
     static private final LocationListener locationListener = new LocationListener() {
+
+        private GPSAccKalmanFilter m_kalmanFilter;
+        // private SensorDataEventLoopTask m_eventLoopTask;
+        private List<Sensor> m_lstSensors = new ArrayList<Sensor>();
+        private SensorManager m_sensorManager;
+        private double m_magneticDeclination = 0.0;
+
+        private float[] rotationMatrix = new float[16];
+        private float[] rotationMatrixInv = new float[16];
+        private float[] absAcceleration = new float[4];
+        private float[] linearAcceleration = new float[4];
+
+        private Location mPrevLocation = null;
+
         @Override
         public void onLocationChanged(Location location) {
             if (BuildConfig.DEBUG) {
                 Log.d(LT, "onLocationChanged");
+            }
+            if (mPrevLocation != null) {
+                if (
+                        Math.abs(mPrevLocation.getLatitude() - location.getLatitude()) < 0.00005 ||
+                                Math.abs(mPrevLocation.getLongitude() - location.getLongitude()) < 0.00005 ||
+                                Math.abs(location.getLatitude()) < 0.0005 ||
+                                Math.abs(location.getLongitude()) < 0.0005
+                ) {
+                    return;
+                }
             }
             subjectLocations.onNext(location);
         }
@@ -40,6 +71,13 @@ public class LocationsTracker {
             isSuspended = true;
             subjectTrackingState.onNext(new TrackingState());
         }
+    };
+
+    public static boolean isSuspended = true;
+    /*accelerometer + rotation vector*/
+    private static int[] sensorTypes = {
+            Sensor.TYPE_LINEAR_ACCELERATION,
+            Sensor.TYPE_ROTATION_VECTOR,
     };
     static private final RequestUpdatesListener requestListener = success -> {
         if (BuildConfig.DEBUG) {
