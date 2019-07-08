@@ -11,19 +11,25 @@ import s4y.waytoday.errors.ErrorsObservable;
 public class Wsse {
     static private final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
-    static private String sha1(String text) {
+    static private String base64(byte[] bytes) {
+        if (bytes == null) {
+            return "";
+        }
+        return Base64.encodeToString(bytes, Base64.NO_WRAP);
+    }
+
+    static private byte[] sha1(String text) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA");
             md.update(text.getBytes(UTF8_CHARSET));
-            byte[] digest = md.digest();
-            return Base64.encodeToString(digest, Base64.NO_WRAP);
+            return md.digest();
         } catch (Exception e) {
             ErrorsObservable.notify(e, true);
-            return "";
+            return null;
         }
     }
 
-    private static String digest(String password, String nonce, String created) {
+    private static byte[] digest(String password, String nonce, String created) {
         String text = nonce + created + password;
         return sha1(text);
     }
@@ -32,8 +38,8 @@ public class Wsse {
         String nonce = String.valueOf(Math.random());
         String created = new Date().toString();
         return "Username=\"s4y.waytoday\"," +
-                "PasswordDigest=\"" + digest(Secret.get(), nonce, created) + "\"," +
-                "nonce=\"" + nonce + "\"," +
+                "PasswordDigest=\"" + base64(digest(Secret.get(), nonce, created)) + "\"," +
+                "Nonce=\"" + base64(nonce.getBytes()) + "\"," +
                 "Created=\"" + created + "\"";
     }
 }
