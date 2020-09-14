@@ -32,13 +32,14 @@ public class MediaPlayerUtils {
                     .setMaxStreams(7)
                     .setAudioAttributes(new AudioAttributes
                             .Builder()
-                            .setFlags(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                             .build())
                     .build();
         } else {
-            mSoundPool = new SoundPool(5, AudioManager.STREAM_NOTIFICATION, 0);
-
+            mSoundPool = new SoundPool(7, AudioManager.STREAM_NOTIFICATION, 0);
         }
+
         try (AssetFileDescriptor afd = context.getAssets().openFd("switch.mp3")) {
             streamSwitch = mSoundPool.load(afd, 1);
         } catch (IOException e) {
@@ -80,7 +81,7 @@ public class MediaPlayerUtils {
     private void stopAll() {
         while (!played.isEmpty()) {
             Integer id = played.iterator().next();
-            mSoundPool.stop(id);
+            //           mSoundPool.stop(id);
             played.remove(id);
         }
     }
@@ -95,7 +96,7 @@ public class MediaPlayerUtils {
             return;
         }
 
-        played.add(mSoundPool.play(streamID, 1, 1, 0, 0, 1));
+        played.add(mSoundPool.play(streamID, 1, 1, 1, 0, 1));
     }
 
     public void playSwitchSound(Context context) {
