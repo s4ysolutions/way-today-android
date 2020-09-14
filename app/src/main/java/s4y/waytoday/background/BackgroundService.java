@@ -146,7 +146,7 @@ public class BackgroundService extends Service {
 
     void stopUpdateLocations() {
         sensorGPS.stop();
-        sensorAcc.stopListen();
+        // sensorAcc.stopListen();
         kalmanFilter = null;
         /*
         if (wakeLock.isHeld())

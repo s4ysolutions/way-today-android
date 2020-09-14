@@ -31,7 +31,6 @@ public class SensorAcc implements SensorEventListener {
 
     /*accelerometer + rotation vector*/
     private static int[] sensorTypes = {
-            Sensor.TYPE_ACCELEROMETER,
             Sensor.TYPE_LINEAR_ACCELERATION,
             Sensor.TYPE_ROTATION_VECTOR,
     };
