@@ -1,5 +1,6 @@
 package s4y.waytoday;
 
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
@@ -20,5 +21,11 @@ class DaggerApplicationModule {
     @Singleton
     SharedPreferences provideSharedPreferences() {
         return PreferenceManager.getDefaultSharedPreferences(application);
+    }
+
+    @Provides
+    @Singleton
+    Context provideContext() {
+        return application;
     }
 }

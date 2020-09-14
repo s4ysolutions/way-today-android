@@ -21,7 +21,7 @@ import s4y.waytoday.MainActivity;
 import s4y.waytoday.R;
 import s4y.waytoday.TestComponent;
 import s4y.waytoday.WTApplication;
-import s4y.waytoday.locations.LocationsTracker;
+import s4y.waytoday.locations.SensorGPS;
 import s4y.waytoday.permissions.PermissionRequestObservable;
 import s4y.waytoday.preferences.PreferenceIsTracking;
 import s4y.waytoday.preferences.PreferenceTrackID;
@@ -84,7 +84,7 @@ public class PermissionsOnFirstLaunchTest {
                 .subject
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(mockTrackIDObserver));
-        disposable.add(LocationsTracker
+        disposable.add(SensorGPS
                 .subjectTrackingState
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(mockTrackerStateObserver));
@@ -148,11 +148,11 @@ public class PermissionsOnFirstLaunchTest {
             onView(withId(R.id.switch_on))
                     .check(matches(not(isDisplayed())));
 
-            ArgumentCaptor<LocationsTracker.TrackingState> arg = ArgumentCaptor.forClass(LocationsTracker.TrackingState.class);
+            ArgumentCaptor<SensorGPS.TrackingState> arg = ArgumentCaptor.forClass(SensorGPS.TrackingState.class);
             verify(mockTrackerStateObserver, timeout(100000).atLeast(1)).accept(arg.capture());
 
-            List<LocationsTracker.TrackingState> states = arg.getAllValues();
-            assertThat(LocationsTracker.isSuspended, is(false));
+            List<SensorGPS.TrackingState> states = arg.getAllValues();
+            assertThat(SensorGPS.isSuspended, is(false));
 
             Thread.sleep(1000); // let animation to end
         }

@@ -25,7 +25,7 @@ public class AppNotification {
         mBuilder =
                 new NotificationCompat.Builder(context, CHANNEL_ID)
                         .setContentTitle(context.getResources().getString(R.string.app_name))
-                        .setContentText("")
+                        .setContentText(context.getResources().getString(R.string.waytoday_in_background))
                         .setTicker(null)
                         .setSmallIcon(context.getApplicationInfo().icon);
     }

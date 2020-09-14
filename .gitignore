@@ -7,14 +7,7 @@
 .hgtags
 *.apk
 session.vim
-.idea/assetWizardSettings.xml
-.idea/caches
-.idea/libraries
-.idea/misc.xml
-.idea/tasks.xml
-.idea/usage.statistics.xml
-.idea/vcs.xml
-.idea/workspace.xml
+.idea
 app/google-services.json
 app/release
 *.iml

@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.os.StrictMode;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.MotionEvent;
@@ -37,7 +38,6 @@ import io.reactivex.disposables.CompositeDisposable;
 import s4y.waytoday.background.BackgroundService;
 import s4y.waytoday.errors.ErrorsObservable;
 import s4y.waytoday.idservice.IDService;
-import s4y.waytoday.locations.LocationsTracker;
 import s4y.waytoday.mainactivity.FrequencyGestureListener;
 import s4y.waytoday.permissions.PermissionRequest;
 import s4y.waytoday.permissions.PermissionRequestObservable;
@@ -158,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ((WTApplication) getApplication()).getAppComponent().inject(this);
+
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
         mTextViewTitlePrev3.setTag(R.id.TAG_IS_TITLE, true);
@@ -200,12 +201,12 @@ public class MainActivity extends AppCompatActivity {
                 .subject
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(userStrategy -> updateSwitch()));
-        resumeDisposables.add(LocationsTracker
+        resumeDisposables.add(BackgroundService.sensorGPS
                 .subjectTrackingState
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(state -> updateLedBackground()));
-        resumeDisposables.add(LocationsTracker
-                .subjectLocations
+        resumeDisposables.add(BackgroundService.sensorGPS
+                .subjectGPS
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(state -> updateLedGpsNew()));
         resumeDisposables.add(PermissionRequestObservable
@@ -359,22 +360,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateLedBackground() {
-        if (BuildConfig.DEBUG) {
-            Log.d(LT,
-                    String.format("updateLedBackground: mBackgroundService=%b, isUpdating=%b, isSuspended=%b",
-                            mBackgroundService != null,
-                            LocationsTracker.isUpdating,
-                            LocationsTracker.isSuspended
-                    ));
-        }
         if (mBackgroundService == null) {
+            if (BuildConfig.DEBUG) {
+                Log.d(LT, "updateLedBackground: mBackgroundService=null");
+            }
             mLedTrackingOff.setVisibility(View.GONE);
             mLedTrackingUnknown.setVisibility(View.VISIBLE);
             mLedTrackingSuspended.setVisibility(View.GONE);
             mLedTrackingOn.setVisibility(View.GONE);
         } else {
-            if (LocationsTracker.isUpdating) {
-                if (LocationsTracker.isSuspended) {
+            if (BuildConfig.DEBUG) {
+                Log.d(LT,
+                        String.format("updateLedBackground: mBackgroundService!=null, isUpdating=%b, isSuspended=%b",
+                                BackgroundService.sensorGPS.isUpdating,
+                                BackgroundService.sensorGPS.isSuspended
+                        ));
+            }
+            if (BackgroundService.sensorGPS.isUpdating) {
+                if (BackgroundService.sensorGPS.isSuspended) {
                     mLedTrackingOff.setVisibility(View.GONE);
                     mLedTrackingUnknown.setVisibility(View.GONE);
                     mLedTrackingSuspended.setVisibility(View.VISIBLE);
@@ -663,7 +666,7 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressLint("MissingSuperCall")
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
         //No call for super(). Bug on API Level > 11.
     }
 }

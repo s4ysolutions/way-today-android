@@ -46,7 +46,7 @@ public class WTApplication extends Application {
     private CompositeDisposable appDisposables = new CompositeDisposable();
     private AppNotification mAppNotification;
 
-    private static WTApplication sApplication;
+    public static WTApplication sApplication;
     private static FirebaseAnalytics sFirebaseAnalytics;
 
     @Override

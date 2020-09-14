@@ -26,5 +26,6 @@
     <string name="share_subj">Ссобщение с сервиса Way.Today</string>
     <string name="text_on">Вкл</string>
     <string name="text_off">Выкл</string>
+    <string name="waytoday_in_background">Работает в фоновом режиме</string>
 
 </resources>

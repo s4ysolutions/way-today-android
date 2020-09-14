@@ -17,7 +17,7 @@ import s4y.waytoday.permissions.RestartOnGivenPermssion;
 import s4y.waytoday.strategies.Strategy;
 
 public class LocationsGPSUpdater implements LocationsUpdater {
-    private static final String LT = LocationsTracker.class.getSimpleName();
+    private static final String LT = SensorGPS.class.getSimpleName();
     @VisibleForTesting
     private
     LocationManager mLocationManager;

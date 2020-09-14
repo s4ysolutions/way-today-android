@@ -3,11 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="s4y.waytoday"
     android:installLocation="internalOnly"
-    android:versionCode="63"
-    android:versionName="3.5.3">
+    android:versionCode="64"
+    android:versionName="4.0.0">
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
@@ -38,15 +40,18 @@
         <service
             android:name=".upload.UploadJobService"
             android:exported="false"
-            android:permission="android.permission.BIND_JOB_SERVICE" />
+            android:enabled="true"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            />
         <service
             android:name=".background.BackgroundService"
+            android:foregroundServiceType="location"
             android:enabled="true"
-            android:permission="android.permission.ACCESS_FINE_LOCATION"
             android:exported="false" />
         <service
             android:name=".idservice.IDService"
             android:exported="false"
+            android:enabled="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <receiver

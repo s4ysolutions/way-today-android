@@ -26,4 +26,5 @@
     <string name="share_subj">Way.Today location note</string>
     <string name="text_on">On</string>
     <string name="text_off">Off</string>
+    <string name="waytoday_in_background">is running in background</string>
 </resources>

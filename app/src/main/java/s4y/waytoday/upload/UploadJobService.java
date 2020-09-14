@@ -5,8 +5,11 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.Location;
 import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.os.BatteryManager;
+import android.os.Build;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -18,6 +21,7 @@ import javax.inject.Inject;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import androidx.core.app.JobIntentService;
+
 import io.grpc.ManagedChannel;
 import io.grpc.Metadata;
 import io.grpc.stub.MetadataUtils;
@@ -176,9 +180,39 @@ public class UploadJobService extends JobIntentService {
         ConnectivityManager cm =
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
 
-        NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-        return activeNetwork != null &&
-                activeNetwork.isConnected();
+        if (cm == null) {
+            return false;
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            Network nw = cm.getActiveNetwork();
+            if (nw == null) {
+                return false;
+            }
+            NetworkCapabilities cap = cm.getNetworkCapabilities(nw);
+            if (cap == null) {
+                return false;
+            }
+
+            if (cap.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                return true;
+            }
+            if (cap.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                return true;
+            }
+            if (cap.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
+                return true;
+            }
+            if (cap.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH)) {
+                return true;
+            }
+            return false;
+        } else {
+            @SuppressWarnings("deprecation") NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
+            //noinspection deprecation
+            return activeNetwork != null &&
+                    activeNetwork.isConnected();
+        }
     }
 
     private LocationOuterClass.Location marshall(Location location) {
@@ -228,6 +262,7 @@ public class UploadJobService extends JobIntentService {
     }
 
     static private final int sJobID = 1001;
+
     public static void enqueueUploadLocations(Context context) {
         Intent intent = new Intent(context, UploadJobService.class);
         enqueueWork(context, UploadJobService.class, sJobID, intent);
@@ -251,9 +286,12 @@ public class UploadJobService extends JobIntentService {
             }
             if (changed) {
                 Status status = uploadStatus();
+                /*
+                TODO:
                 if (sPrevStatus == status) {
                     ErrorsObservable.notify(new Exception("Status must not be the same"), true);
                 }
+                 */
                 sPrevStatus = status;
                 subjectStatus.onNext(uploadStatus());
             } else {
