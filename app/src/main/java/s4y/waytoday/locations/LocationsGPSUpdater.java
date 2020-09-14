@@ -84,7 +84,7 @@ public class LocationsGPSUpdater implements LocationsUpdater {
                 ErrorsObservable.toast(e);
                 mRequestUpdatesListener.onRequestResult(false);
             } catch (SecurityException e) {
-                ErrorsObservable.notify(e, !MainActivity.sHasFocus);
+                ErrorsObservable.notify(e, false);//!MainActivity.sHasFocus);
                 PermissionRequestObservable.onNext(
                         Manifest.permission.ACCESS_COARSE_LOCATION,
                         this
