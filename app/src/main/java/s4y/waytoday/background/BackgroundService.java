@@ -265,7 +265,7 @@ public class BackgroundService extends Service {
 
     private Location locationAfterUpdateStep(Location location) {
         double xVel, yVel;
-        Location loc = new Location("WayTodayAnroidKalman");
+        Location loc = new Location("WayTodayAnroid");
         GeoPoint pp = Coordinates.metersToGeoPoint(kalmanFilter.getCurrentX(),
                 kalmanFilter.getCurrentY());
         loc.setLatitude(pp.Latitude);
@@ -295,11 +295,18 @@ public class BackgroundService extends Service {
         double lat = location.getLatitude();
         double lon = location.getLongitude();
 
+        if (BuildConfig.DEBUG) {
+            Log.d(LT, "Request to publish location "+lon+","+lat);
+        }
+
         if (lat == 0 || lon == 0) {
             return;
         }
 
         if (Math.abs(lat - prevLat) < 0.0001 && Math.abs(lon - prevLon) < 0.0001) {
+            if (BuildConfig.DEBUG) {
+                Log.d(LT, "Skip upload because too close");
+            }
             return;
         }
 
