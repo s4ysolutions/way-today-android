@@ -12,8 +12,9 @@ import android.os.BatteryManager;
 import android.os.Build;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.Deque;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
@@ -49,7 +50,7 @@ public class UploadJobService extends JobIntentService {
     public static final PublishSubject<Status> subjectStatus = PublishSubject.create();
     private static Boolean sIsUploading = false;
     private static Boolean sIsError = false;
-    private static final LinkedList<Location> uploadQueue = new LinkedList<>();
+    private static final Deque<Location> uploadQueue = new LinkedBlockingDeque<>();
     private final static int MAX_LOCATIONS_MEMORY = 500;
     private final static int PACK_SIZE = 16;
     @Inject
@@ -66,9 +67,7 @@ public class UploadJobService extends JobIntentService {
         if (sIsUploading)
             return Status.UPLOADING;
         int size;
-        synchronized (uploadQueue) {
-            size = uploadQueue.size();
-        }
+        size = uploadQueue.size();
         if (size > 0)
             return Status.QUEUED;
         return Status.EMPTY;
@@ -111,28 +110,24 @@ public class UploadJobService extends JobIntentService {
         TODO: while there's no persist store just remove
         the oldest locations from the queue
         */
-        synchronized (uploadQueue) {
-            while (uploadQueue.size() > MAX_LOCATIONS_MEMORY) {
-                uploadQueue.pollFirst();
-            }
+        while (uploadQueue.size() > MAX_LOCATIONS_MEMORY) {
+            uploadQueue.pollFirst();
         }
     }
 
     public enum Status {EMPTY, QUEUED, UPLOADING, ERROR}
 
-    private boolean uploadQueue() {
+    private synchronized boolean uploadQueue() {
         List<Location> pack = new ArrayList<>();
         boolean completed = false;
         for (; ; ) {
             pack.clear();
             int packSize;
-            synchronized (uploadQueue) {
-                packSize = Math.min(uploadQueue.size(), PACK_SIZE);
-                for (int i = 0; i < packSize; i++) {
-                    Location head = uploadQueue.peekFirst();
-                    if (head != null) {
-                        pack.add(head);
-                    }
+            packSize = Math.min(uploadQueue.size(), PACK_SIZE);
+            for (int i = 0; i < packSize; i++) {
+                Location head = uploadQueue.peekFirst();
+                if (head != null) {
+                    pack.add(head);
                 }
             }
             if (pack.size() > 0) {
@@ -153,9 +148,7 @@ public class UploadJobService extends JobIntentService {
                     TrackerOuterClass.AddLocationResponse resp = grpcStub.addLocations(req.build());
                     if (resp.getOk()) {
                         for (int i = 0; i < packSize; i++) {
-                            synchronized (uploadQueue) {
-                                uploadQueue.pollFirst();
-                            }
+                            uploadQueue.pollFirst();
                         }
                     } else {
                         ErrorsObservable.notify(new Exception(getString(R.string.upload_not_ok)));
@@ -166,11 +159,9 @@ public class UploadJobService extends JobIntentService {
                     break;
                 }
             }
-            synchronized (uploadQueue) {
-                if (uploadQueue.size() == 0) {
-                    completed = true;
-                    break;
-                }
+            if (uploadQueue.size() == 0) {
+                completed = true;
+                break;
             }
         }
         return completed;
@@ -203,6 +194,7 @@ public class UploadJobService extends JobIntentService {
             if (cap.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
                 return true;
             }
+            //noinspection RedundantIfStatement
             if (cap.hasTransport(NetworkCapabilities.TRANSPORT_BLUETOOTH)) {
                 return true;
             }
@@ -242,7 +234,7 @@ public class UploadJobService extends JobIntentService {
                 .setSid(randomUUID().toString())
                 .setSpeed(i(location.getSpeed()))
                 .setTid(mTrackID.get())
-                .setTs(System.currentTimeMillis() / 1000)
+                .setTs(location.getTime() / 1000)// System.currentTimeMillis() / 1000)
                 .build();
     }
 
@@ -254,9 +246,7 @@ public class UploadJobService extends JobIntentService {
     private static Status sPrevStatus;
 
     public static void enqueueUploadLocation(Context context, Location location) {
-        synchronized (uploadQueue) {
-            uploadQueue.add(location);
-        }
+        uploadQueue.add(location);
         notifyUpdateState();
         enqueueUploadLocations(context);
     }
