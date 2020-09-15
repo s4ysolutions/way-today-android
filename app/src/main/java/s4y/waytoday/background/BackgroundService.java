@@ -9,6 +9,7 @@ import android.location.Location;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.util.Log;
 
 import javax.inject.Inject;
@@ -46,7 +47,7 @@ import static s4y.waytoday.upload.UploadJobService.enqueueUploadLocation;
 
 public class BackgroundService extends Service {
     static public final String LT = BackgroundService.class.getSimpleName();
-    //    static public final String WL_TAG = "s4y.waytoday:backgground_service";
+    static public final String WL_TAG = "s4y.waytoday:backgground_service";
     static public final String FLAG_FOREGROUND = "ffg";
     static public Strategy currentStrategy = new RTStrategy();
 
@@ -66,7 +67,7 @@ public class BackgroundService extends Service {
     private boolean mForeground;
     private CompositeDisposable mServiceDisposables;
 
-    // private PowerManager.WakeLock wakeLock;
+    private PowerManager.WakeLock wakeLock;
 
     private FilterSettings filterSettings = FilterSettings.defaultSettings;
 
@@ -84,8 +85,8 @@ public class BackgroundService extends Service {
     public void onCreate() {
         super.onCreate();
         ((WTApplication) getApplication()).getAppComponent().inject(this);
-        // PowerManager powerManager = (PowerManager) WTApplication.sApplication.getSystemService(POWER_SERVICE);
-        // wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WL_TAG);
+        PowerManager powerManager = (PowerManager) WTApplication.sApplication.getSystemService(POWER_SERVICE);
+        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WL_TAG);
         currentStrategy = new UserStrategy(mPreferenceUpdateFrequency);
         sensorAcc = new SensorAcc(this);
         gpsLocatonUpdater = new LocationsGPSUpdater(this);
@@ -138,7 +139,7 @@ public class BackgroundService extends Service {
 
     @SuppressLint("WakelockTimeout")
     void startUpdateLocations() {
-        // wakeLock.acquire();
+        wakeLock.acquire();
         // NOTE: too much power
         // sensorAcc.startListen();
         sensorGPS.requestStart(gpsLocatonUpdater, currentStrategy);
@@ -148,10 +149,8 @@ public class BackgroundService extends Service {
         sensorGPS.stop();
         // sensorAcc.stopListen();
         kalmanFilter = null;
-        /*
         if (wakeLock.isHeld())
             wakeLock.release();
-         */
     }
 
     double lastGPSTimeStamp = 0;
@@ -296,7 +295,7 @@ public class BackgroundService extends Service {
         double lon = location.getLongitude();
 
         if (BuildConfig.DEBUG) {
-            Log.d(LT, "Request to publish location "+lon+","+lat);
+            Log.d(LT, "Request to publish location " + lon + "," + lat);
         }
 
         if (lat == 0 || lon == 0) {
@@ -372,17 +371,18 @@ public class BackgroundService extends Service {
 
     private void handleUploadStatus() {
         UploadJobService.Status status = UploadJobService.uploadStatus();
-        if (mSound.isOn()) {
-            if (status == UploadJobService.Status.ERROR)
-                MediaPlayerUtils.getInstance(this).playUploadFail(this);
-            else if (status == UploadJobService.Status.EMPTY)
-                MediaPlayerUtils.getInstance(this).playUploadOk(this);
-        }
         if (status == UploadJobService.Status.ERROR) {
             RetryUploadAlarm.startRetryUploadAlarmmanager(this);
+            if (mSound.isOn()) {
+                MediaPlayerUtils.getInstance(this).playUploadFail(this);
+            }
         } else {
             // should never be used but just in case
             RetryUploadAlarm.cancelRetryUploadAlarmmanager(this);
+            if (mSound.isOn()) {
+                // if (status == UploadJobService.Status.EMPTY)
+                MediaPlayerUtils.getInstance(this).playUploadOk(this);
+            }
         }
     }
 
