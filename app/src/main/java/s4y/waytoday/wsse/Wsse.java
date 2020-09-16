@@ -3,13 +3,14 @@ package s4y.waytoday.wsse;
 import android.util.Base64;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Date;
 
 import s4y.waytoday.errors.ErrorsObservable;
 
 public class Wsse {
-    static private final Charset UTF8_CHARSET = Charset.forName("UTF-8");
+    static private final Charset UTF8_CHARSET = StandardCharsets.UTF_8;
 
     static private String base64(byte[] bytes) {
         if (bytes == null) {

@@ -68,7 +68,7 @@ public class Coordinates {
         return getPointAhead(point, distance, 0.0);
     }
 
-    public static double calculateDistance(GeoPoint track[]) {
+    public static double calculateDistance(GeoPoint[] track) {
         double distance = 0.0;
         double lastLon, lastLat;
         //WARNING! I didn't find array.length type. Seems it's int, so we can use next comparison:

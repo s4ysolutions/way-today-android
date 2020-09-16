@@ -9,7 +9,6 @@ import android.location.Location;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.PowerManager;
 import android.util.Log;
 
 import javax.inject.Inject;
@@ -24,6 +23,8 @@ import mad.location.manager.lib.Filters.GPSAccKalmanFilter;
 import s4y.waytoday.BuildConfig;
 import s4y.waytoday.MainActivity;
 import s4y.waytoday.WTApplication;
+import s4y.waytoday.preferences.PreferenceNextExpectedActivityTS;
+import s4y.waytoday.watchdog.Watchdog;
 import s4y.waytoday.locations.DataItem;
 import s4y.waytoday.locations.DataItemAcc;
 import s4y.waytoday.locations.DataItemGPS;
@@ -47,14 +48,13 @@ import static s4y.waytoday.upload.UploadJobService.enqueueUploadLocation;
 
 public class BackgroundService extends Service {
     static public final String LT = BackgroundService.class.getSimpleName();
-    static public final String WL_TAG = "s4y.waytoday:backgground_service";
     static public final String FLAG_FOREGROUND = "ffg";
     static public Strategy currentStrategy = new RTStrategy();
 
     private LocationsUpdater gpsLocatonUpdater;
     private SensorAcc sensorAcc;
     static public SensorGPS sensorGPS = new SensorGPS();
-    private GPSAccKalmanFilter kalmanFilter;
+    private GPSAccKalmanFilter mKalmanFilter;
     @Inject
     PreferenceIsTracking mIsTracking;
     @Inject
@@ -63,13 +63,16 @@ public class BackgroundService extends Service {
     PreferenceSound mSound;
     @Inject
     PreferenceUpdateFrequency mPreferenceUpdateFrequency;
+    @Inject
+    PreferenceNextExpectedActivityTS mPreferenceNextEpectedActivityTimstamp;
+
+    Watchdog mWatchDog = new Watchdog();
 
     private boolean mForeground;
     private CompositeDisposable mServiceDisposables;
 
-    private PowerManager.WakeLock wakeLock;
-
     private FilterSettings filterSettings = FilterSettings.defaultSettings;
+    private float minDistance = 1;
 
     public static void startService(Context context, boolean foreground) {
         Intent intent = new Intent(context, BackgroundService.class);
@@ -85,8 +88,6 @@ public class BackgroundService extends Service {
     public void onCreate() {
         super.onCreate();
         ((WTApplication) getApplication()).getAppComponent().inject(this);
-        PowerManager powerManager = (PowerManager) WTApplication.sApplication.getSystemService(POWER_SERVICE);
-        wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, WL_TAG);
         currentStrategy = new UserStrategy(mPreferenceUpdateFrequency);
         sensorAcc = new SensorAcc(this);
         gpsLocatonUpdater = new LocationsGPSUpdater(this);
@@ -106,7 +107,7 @@ public class BackgroundService extends Service {
         mServiceDisposables.add(
                 mPreferenceUpdateFrequency
                         .subject
-                        .subscribe(freq -> restartUpdateLocations()));
+                        .subscribe(freq -> restartUpdateLocationsIfActive()));
         if (mIsTracking.isOn()) {
             start(!MainActivity.sHasFocus);
         }
@@ -139,33 +140,48 @@ public class BackgroundService extends Service {
 
     @SuppressLint("WakelockTimeout")
     void startUpdateLocations() {
-        wakeLock.acquire();
         // NOTE: too much power
         // sensorAcc.startListen();
+        minDistance = currentStrategy.getMinTime() < 15000 ? 0.0002f : 0.0005f;
+        mWatchDog.start(this, currentStrategy.getMinTime());
         sensorGPS.requestStart(gpsLocatonUpdater, currentStrategy);
+        setNextEpectedActivityTimstamp();
     }
 
     void stopUpdateLocations() {
+        setNextEpectedActivityTimstamp(0);
+        mWatchDog.stop(this);
         sensorGPS.stop();
         // sensorAcc.stopListen();
-        kalmanFilter = null;
-        if (wakeLock.isHeld())
-            wakeLock.release();
+        mKalmanFilter = null;
     }
 
     double lastGPSTimeStamp = 0;
 
+    private void setNextEpectedActivityTimstamp() {
+        setNextEpectedActivityTimstamp(System.currentTimeMillis() + Math.max(30000, Math.round(currentStrategy.getMinTime() * 1.5)));
+    }
+
+    private void setNextEpectedActivityTimstamp(long ts) {
+        mPreferenceNextEpectedActivityTimstamp.set(ts);
+    }
+
     private void onGPS(DataItemGPS gps) {
+        // used by watchdog
+        setNextEpectedActivityTimstamp();
         if (BuildConfig.DEBUG) {
             Log.d("LT", "onGPS " + ((gps.location == null) ? "null" : gps.location.toString()));
         }
         if (gps.location == null) {
             return;
         }
+        if (mSound.isOn()) {
+            MediaPlayerUtils.getInstance(this).playGpsOk(this);
+        }
         if (gps.location.getLatitude() == 0 || gps.location.getLongitude() == 0) {
             return;
         }
-        if (kalmanFilter == null) {
+        if (mKalmanFilter == null) {
             Location location = gps.location;
             double x, y, xVel, yVel, posDev, course, speed;
             long timeStamp;
@@ -177,7 +193,7 @@ public class BackgroundService extends Service {
             yVel = speed * Math.sin(course);
             posDev = location.getAccuracy();
             timeStamp = Utils.nano2milli(location.getElapsedRealtimeNanos());
-            kalmanFilter = new GPSAccKalmanFilter(
+            mKalmanFilter = new GPSAccKalmanFilter(
                     false, //todo move to settings
                     Coordinates.longitudeToMeters(x),
                     Coordinates.latitudeToMeters(y),
@@ -215,7 +231,7 @@ public class BackgroundService extends Service {
         if (acc.absNorthAcc == DataItem.NOT_INITIALIZED) {
             return;
         }
-        if (kalmanFilter != null) {
+        if (mKalmanFilter != null) {
             if (acc.getTimestamp() < lastAccTimeStamp) {
                 return;
             }
@@ -231,13 +247,13 @@ public class BackgroundService extends Service {
             if (BuildConfig.DEBUG) {
                 Log.d(LT, "kalmanFilter.predict (no location): east=" + acc.absEastAcc + " north=" + acc.absNorthAcc);
             }
-            kalmanFilter.predict(acc.getTimestamp(), acc.absEastAcc, acc.absNorthAcc);
+            mKalmanFilter.predict(acc.getTimestamp(), acc.absEastAcc, acc.absNorthAcc);
         } else {
             double declination = gps.getDeclination();
             if (BuildConfig.DEBUG) {
                 Log.d(LT, "kalmanFilter.predict: (location): east=" + acc.getAbsEastAcc(declination) + " north=" + acc.getAbsNorthAcc(declination) + " decl=" + declination);
             }
-            kalmanFilter.predict(acc.getTimestamp(), acc.getAbsEastAcc(declination), acc.getAbsNorthAcc(declination));
+            mKalmanFilter.predict(acc.getTimestamp(), acc.getAbsEastAcc(declination), acc.getAbsNorthAcc(declination));
         }
     }
 
@@ -251,7 +267,7 @@ public class BackgroundService extends Service {
             }
         }
 
-        kalmanFilter.update(
+        mKalmanFilter.update(
                 gps.getTimestamp(),
                 Coordinates.longitudeToMeters(location.getLongitude()),
                 Coordinates.latitudeToMeters(location.getLatitude()),
@@ -265,13 +281,13 @@ public class BackgroundService extends Service {
     private Location locationAfterUpdateStep(Location location) {
         double xVel, yVel;
         Location loc = new Location("WayTodayAnroid");
-        GeoPoint pp = Coordinates.metersToGeoPoint(kalmanFilter.getCurrentX(),
-                kalmanFilter.getCurrentY());
+        GeoPoint pp = Coordinates.metersToGeoPoint(mKalmanFilter.getCurrentX(),
+                mKalmanFilter.getCurrentY());
         loc.setLatitude(pp.Latitude);
         loc.setLongitude(pp.Longitude);
         loc.setAltitude(location.getAltitude());
-        xVel = kalmanFilter.getCurrentXVel();
-        yVel = kalmanFilter.getCurrentYVel();
+        xVel = mKalmanFilter.getCurrentXVel();
+        yVel = mKalmanFilter.getCurrentYVel();
         double speed = Math.sqrt(xVel * xVel + yVel * yVel); //scalar speed without bearing
         loc.setBearing(location.getBearing());
         loc.setSpeed((float) speed);
@@ -302,7 +318,7 @@ public class BackgroundService extends Service {
             return;
         }
 
-        if (Math.abs(lat - prevLat) < 0.0001 && Math.abs(lon - prevLon) < 0.0001) {
+        if (Math.abs(lat - prevLat) < minDistance && Math.abs(lon - prevLon) < minDistance) {
             if (BuildConfig.DEBUG) {
                 Log.d(LT, "Skip upload because too close");
             }
@@ -316,9 +332,6 @@ public class BackgroundService extends Service {
         if (mTrackID.isNotSet())
             return;
         enqueueUploadLocation(this, location);
-        if (mSound.isOn()) {
-            MediaPlayerUtils.getInstance(this).playGpsOk(this);
-        }
     }
 
     public void removeFromForeground() {
@@ -355,11 +368,17 @@ public class BackgroundService extends Service {
     }
 
 
+    private void restartUpdateLocationsIfActive() {
+        if (sensorGPS.isUpdating) {
+            restartUpdateLocations();
+        }
+    }
+
     private void restartUpdateLocations() {
         if (sensorGPS.isUpdating) {
             stopUpdateLocations();
+            startUpdateLocations();
         }
-        startUpdateLocations();
     }
 
     public class LocationsServiceBinder extends Binder {
@@ -376,7 +395,7 @@ public class BackgroundService extends Service {
             if (mSound.isOn()) {
                 MediaPlayerUtils.getInstance(this).playUploadFail(this);
             }
-        } else {
+        } else if (status == UploadJobService.Status.EMPTY) {
             // should never be used but just in case
             RetryUploadAlarm.cancelRetryUploadAlarmmanager(this);
             if (mSound.isOn()) {

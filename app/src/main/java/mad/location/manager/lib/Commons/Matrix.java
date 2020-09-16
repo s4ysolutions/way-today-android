@@ -7,7 +7,7 @@ package mad.location.manager.lib.Commons;
 public class Matrix {
     private int rows;
     private int cols;
-    public double data[][];
+    public double[][] data;
 
     public Matrix(int rows, int cols) {
         this.rows = rows;
@@ -28,7 +28,7 @@ public class Matrix {
         assert(args.length == rows * cols);
         for (int r = 0; r < rows; ++r) {
             for (int c = 0; c < cols; ++c) {
-                data[r][c] = (double)args[r*cols + c];
+                data[r][c] = args[r*cols + c];
             }
         }
     }
@@ -189,7 +189,7 @@ public class Matrix {
 
     private void swapRows(int r1, int r2) {
         assert(r1 != r2);
-        double tmp[] = data[r1];
+        double[] tmp = data[r1];
         data[r1] = data[r2];
         data[r2] = tmp;
     }

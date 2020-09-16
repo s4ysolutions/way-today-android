@@ -1,5 +1,7 @@
 package s4y.waytoday;
 
+import android.content.BroadcastReceiver;
+
 import javax.inject.Singleton;
 
 import dagger.Component;
@@ -10,6 +12,7 @@ import s4y.waytoday.idservice.IDService;
 import s4y.waytoday.preferences.DaggerPreferencesModule;
 import s4y.waytoday.strategies.DaggerStrategiesModule;
 import s4y.waytoday.upload.UploadJobService;
+import s4y.waytoday.watchdog.Watchdog;
 
 @Singleton
 @Component(modules = {
@@ -27,5 +30,6 @@ public interface AppComponent {
     void inject(UploadJobService service);
     void inject(BackgroundService service);
 
+    void inject(Watchdog.WatchdogBroadcastReceiver receiver);
     void inject(BootReceiver receiver);
 }

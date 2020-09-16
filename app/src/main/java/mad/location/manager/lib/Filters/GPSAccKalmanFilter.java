@@ -44,7 +44,7 @@ public class GPSAccKalmanFilter {
     }
 
     private void rebuildF(double dtPredict) {
-        double f[] = {
+        double[] f = {
                 1.0, 0.0, dtPredict, 0.0,
                 0.0, 1.0, 0.0, dtPredict,
                 0.0, 0.0, 1.0, 0.0,
@@ -60,7 +60,7 @@ public class GPSAccKalmanFilter {
 
     private void rebuildB(double dtPredict) {
         double dt2 = 0.5*dtPredict*dtPredict;
-        double b[] = {
+        double[] b = {
                 dt2, 0.0,
                 0.0, dt2,
                 dtPredict, 0.0,
@@ -81,7 +81,7 @@ public class GPSAccKalmanFilter {
                 ", posFactor :" + mPosFactor +
                 "}");
         if (m_useGpsSpeed) {
-            double R[] = {
+            double[] R = {
                     posSigma, 0.0, 0.0, 0.0,
                     0.0, posSigma, 0.0, 0.0,
                     0.0, 0.0, velSigma, 0.0,
@@ -106,7 +106,7 @@ public class GPSAccKalmanFilter {
         double posSig = posDev * posDev;
         double velSig = velDev * velDev;
 
-        double Q[] = {
+        double[] Q = {
                 posSig, 0.0, covDev, 0.0,
                 0.0, posSig, 0.0, covDev,
                 covDev, 0.0, velSig, 0.0,

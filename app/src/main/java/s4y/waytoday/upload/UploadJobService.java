@@ -151,10 +151,12 @@ public class UploadJobService extends JobIntentService {
                             uploadQueue.pollFirst();
                         }
                     } else {
+                        sIsError = true;
                         ErrorsObservable.notify(new Exception(getString(R.string.upload_not_ok)));
                         break;
                     }
                 } catch (Exception e) {
+                    sIsError = true;
                     ErrorsObservable.notify(e, true);
                     break;
                 }
@@ -243,8 +245,6 @@ public class UploadJobService extends JobIntentService {
         return TrackerGrpc.newBlockingStub(ch);
     }
 
-    private static Status sPrevStatus;
-
     public static void enqueueUploadLocation(Context context, Location location) {
         uploadQueue.add(location);
         notifyUpdateState();
@@ -258,6 +258,8 @@ public class UploadJobService extends JobIntentService {
         enqueueWork(context, UploadJobService.class, sJobID, intent);
     }
 
+
+    private static Status sPrevStatus;
     private static void notifyUpdateState() {
         if (BuildConfig.DEBUG) {
             boolean changed = false;
@@ -276,12 +278,9 @@ public class UploadJobService extends JobIntentService {
             }
             if (changed) {
                 Status status = uploadStatus();
-                /*
-                TODO:
-                if (sPrevStatus == status) {
+                if (sPrevStatus == status && sPrevSize == size) {
                     ErrorsObservable.notify(new Exception("Status must not be the same"), true);
                 }
-                 */
                 sPrevStatus = status;
                 subjectStatus.onNext(uploadStatus());
             } else {
@@ -313,8 +312,9 @@ public class UploadJobService extends JobIntentService {
                 if (uploadQueue.size() > MAX_LOCATIONS_MEMORY) {
                     saveQueueToStore();
                 }
+            }
+            if (sIsError) {
                 destoryGrpcChannel();
-                sIsError = true;
             }
             sIsUploading = false;
             notifyUpdateState();

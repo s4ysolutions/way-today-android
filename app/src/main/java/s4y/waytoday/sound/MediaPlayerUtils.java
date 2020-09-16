@@ -81,7 +81,7 @@ public class MediaPlayerUtils {
     private void stopAll() {
         while (!played.isEmpty()) {
             Integer id = played.iterator().next();
-            //           mSoundPool.stop(id);
+            mSoundPool.stop(id);
             played.remove(id);
         }
     }

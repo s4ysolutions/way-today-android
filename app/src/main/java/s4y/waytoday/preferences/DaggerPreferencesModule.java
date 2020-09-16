@@ -45,4 +45,10 @@ public class DaggerPreferencesModule {
         return new PreferenceSound(sp);
     }
 
+
+    @Provides
+    @Singleton
+    PreferenceNextExpectedActivityTS providePreferenceNextExpectedActivityTS (SharedPreferences sp) {
+        return new PreferenceNextExpectedActivityTS(sp);
+    }
 }
