@@ -10,6 +10,7 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.os.BatteryManager;
 import android.os.Build;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Deque;
@@ -45,8 +46,7 @@ import static java.util.UUID.randomUUID;
 import static s4y.waytoday.utils.FConv.i;
 
 public class UploadJobService extends JobIntentService {
-    @SuppressWarnings("unused")
-    private static final String LT = JobIntentService.class.getSimpleName();
+    private static final String LT = UploadJobService.class.getSimpleName();
     public static final PublishSubject<Status> subjectStatus = PublishSubject.create();
     private static Boolean sIsUploading = false;
     private static Boolean sIsError = false;
@@ -247,6 +247,7 @@ public class UploadJobService extends JobIntentService {
 
     public static void enqueueUploadLocation(Context context, Location location) {
         uploadQueue.add(location);
+        Log.d(LT,"Add location to the queue, size=" + uploadQueue.size());
         notifyUpdateState();
         enqueueUploadLocations(context);
     }
@@ -273,7 +274,6 @@ public class UploadJobService extends JobIntentService {
             }
             int size = uploadQueue.size();
             if (size != sPrevSize) {
-                sPrevSize = size;
                 changed = true;
             }
             if (changed) {
@@ -282,6 +282,7 @@ public class UploadJobService extends JobIntentService {
                     ErrorsObservable.notify(new Exception("Status must not be the same"), true);
                 }
                 sPrevStatus = status;
+                sPrevSize = size;
                 subjectStatus.onNext(uploadStatus());
             } else {
                 ErrorsObservable.notify(new Exception("Should never be called without changes"), true);
@@ -293,6 +294,7 @@ public class UploadJobService extends JobIntentService {
 
     @Override
     protected void onHandleWork(@NonNull Intent intent) {
+        Log.d(LT,"Upload onHandleWork, queue size=" + uploadQueue.size());
         if (mTrackID.isNotSet()) return;
         if (sIsUploading) {
             ErrorsObservable.notify(new Error("UploadJobService re-entry"), BuildConfig.DEBUG);
@@ -307,7 +309,10 @@ public class UploadJobService extends JobIntentService {
             if (isConnected()) {
                 uploadStore();
                 completed = uploadQueue();
+            } else {
+                sIsError = true;
             }
+            Log.d(LT,"Queue uploaded, size=" + uploadQueue.size()+", error="+sIsError);
             if (!completed) {
                 if (uploadQueue.size() > MAX_LOCATIONS_MEMORY) {
                     saveQueueToStore();

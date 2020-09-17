@@ -1,6 +1,5 @@
 package s4y.waytoday.locations;
 
-import android.hardware.GeomagneticField;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
@@ -10,7 +9,6 @@ import androidx.annotation.NonNull;
 
 import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.PublishSubject;
-import mad.location.manager.lib.Commons.Utils;
 import s4y.waytoday.BuildConfig;
 import s4y.waytoday.grpc.LocationOuterClass;
 import s4y.waytoday.strategies.Strategy;
