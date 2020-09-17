@@ -284,8 +284,6 @@ public class UploadJobService extends JobIntentService {
                 sPrevStatus = status;
                 sPrevSize = size;
                 subjectStatus.onNext(uploadStatus());
-            } else {
-                ErrorsObservable.notify(new Exception("Should never be called without changes"), true);
             }
         } else {
             subjectStatus.onNext(uploadStatus());
