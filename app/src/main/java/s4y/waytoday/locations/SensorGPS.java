@@ -7,7 +7,6 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
-import io.reactivex.subjects.BehaviorSubject;
 import io.reactivex.subjects.PublishSubject;
 import s4y.waytoday.BuildConfig;
 import s4y.waytoday.grpc.LocationOuterClass;
@@ -16,9 +15,7 @@ import s4y.waytoday.strategies.Strategy;
 public class SensorGPS {
     private static final String LT = LocationOuterClass.Location.class.getSimpleName();
 
-    public final BehaviorSubject<DataItemGPS> subjectGPS = BehaviorSubject.createDefault(
-            new DataItemGPS( null)
-    );
+    public final PublishSubject<DataItemGPS> subjectGPS = PublishSubject.create();
     public PublishSubject<TrackingState> subjectTrackingState = PublishSubject.create();
 
     private final LocationListener locationListener = new LocationListener() {
@@ -44,8 +41,8 @@ public class SensorGPS {
             prevLon = lon;
             prevLat = lat;
 
-            DataItemGPS sdi = new DataItemGPS(location);
-            subjectGPS.onNext(sdi);
+            lastDataItemGPS = new DataItemGPS(location);
+            subjectGPS.onNext(lastDataItemGPS);
         }
 
         @Override
@@ -67,6 +64,7 @@ public class SensorGPS {
 
     public boolean isSuspended = true;
     public boolean isUpdating;
+    private DataItemGPS lastDataItemGPS = new DataItemGPS(null);
 
     private final RequestUpdatesListener requestListener = success -> {
         if (BuildConfig.DEBUG) {
@@ -104,7 +102,7 @@ public class SensorGPS {
     }
 
     public DataItemGPS data() {
-        return subjectGPS.getValue();
+        return lastDataItemGPS;
     }
 
     public static class TrackingState {
