@@ -142,7 +142,8 @@ public class BackgroundService extends Service {
     void startUpdateLocations() {
         // NOTE: too much power
         // sensorAcc.startListen();
-        minDistance = currentStrategy.getMinTime() < 15000 ? 0.0002f : 0.0005f;
+        long minTime = currentStrategy.getMinTime();
+        minDistance = minTime < 5000 ? 0 : minTime < 15000 ? 0.0002f : 0.0005f;
         mWatchDog.start(this, currentStrategy.getMinTime());
         sensorGPS.requestStart(gpsLocatonUpdater, currentStrategy);
         setNextEpectedActivityTimstamp();

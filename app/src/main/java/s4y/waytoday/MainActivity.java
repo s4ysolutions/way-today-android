@@ -11,7 +11,10 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.MotionEvent;
@@ -28,6 +31,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.view.GestureDetectorCompat;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -41,10 +45,12 @@ import s4y.waytoday.mainactivity.FrequencyGestureListener;
 import s4y.waytoday.permissions.PermissionRequest;
 import s4y.waytoday.permissions.PermissionRequestObservable;
 import s4y.waytoday.preferences.PreferenceIsTracking;
+import s4y.waytoday.preferences.PreferenceRequestedIgnoreOptimization;
 import s4y.waytoday.preferences.PreferenceSound;
 import s4y.waytoday.preferences.PreferenceTrackID;
 import s4y.waytoday.preferences.PreferenceUpdateFrequency;
 import s4y.waytoday.sound.MediaPlayerUtils;
+import s4y.waytoday.strategies.UserStrategy;
 import s4y.waytoday.upload.UploadJobService;
 
 import static s4y.waytoday.upload.UploadJobService.uploadStatus;
@@ -60,6 +66,8 @@ public class MainActivity extends AppCompatActivity {
     PreferenceTrackID mTrackID;
     @Inject
     PreferenceSound mSound;
+    @Inject
+    PreferenceRequestedIgnoreOptimization mRequestedIgnoreOptimization;
 
     @BindView(R.id.title_current)
     TextView mTextViewTitleCurrent;
@@ -196,6 +204,10 @@ public class MainActivity extends AppCompatActivity {
                 .subject
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(userStrategy -> updateUserStrategyChooser()));
+        resumeDisposables.add(mUserStrategyFrequency
+                .subject
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(userStrategy -> requestIgnoreOptimization()));
         resumeDisposables.add(mIsActive
                 .subject
                 .observeOn(AndroidSchedulers.mainThread())
@@ -321,6 +333,49 @@ public class MainActivity extends AppCompatActivity {
         WTApplication.faOn();
     }
 
+    long requestCount = 0;
+
+    @SuppressLint("BatteryLife")
+    private void requestIgnoreOptimization() {
+        if (requestCount++ < 3) {
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            UserStrategy userStrategy = new UserStrategy(mUserStrategyFrequency);
+            String packageName = getPackageName();
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            if (userStrategy.getMinTime() < 15 * 60 * 1000 && !pm.isIgnoringBatteryOptimizations(packageName) && !mRequestedIgnoreOptimization.requested()) {
+                //Handler handler = new Handler(getMainLooper());
+                //handler.post(() -> {
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setMessage(R.string.request_ignore_battery_optimization)
+                        .setTitle(R.string.request_ignore_battery_optimization_title)
+                        .setPositiveButton(R.string.request_ignore_battery_optimization_ok,
+                                (dialog, which) -> {
+                                    mRequestedIgnoreOptimization.setRequested();
+                                    dialog.dismiss();
+                                    //                       handler.post(new Runnable() {
+                                    //                         @Override
+                                    //                        public void run() {
+                                    Intent intent = new Intent();
+                                    intent.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+                                    // see Manifest
+                                    // intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                                    // intent.setData(Uri.parse("package:" + packageName));
+                                    startActivity(intent);
+                                    //                       }
+                                    //                  });
+                                })
+                        .setNegativeButton(R.string.request_ignore_battery_optimization_cancel, (dialog, which) -> {
+                            mRequestedIgnoreOptimization.setRequested();
+                            dialog.cancel();
+                        })
+                        .show();
+                //});
+            }
+        }
+    }
+
     private void updateUserStrategyChooser() {
         PreferenceUpdateFrequency.Frequencies current =
                 mUserStrategyFrequency.get();
@@ -332,6 +387,7 @@ public class MainActivity extends AppCompatActivity {
         mTextViewTitleNext1.setText(current.getTitleResID(1));
         mTextViewTitleNext2.setText(current.getTitleResID(2));
         mTextViewTitleNext3.setText(current.getTitleResID(3));
+        requestIgnoreOptimization();
     }
 
     private void updateSwitch() {

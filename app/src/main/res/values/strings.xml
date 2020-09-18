@@ -21,10 +21,17 @@
     <string name="request_permission_title">Permission request</string>
     <string name="request_location_permission">Allow access to your position</string>
     <string name="id_request_failed">couldn\'t get</string>
+    <string name="request_ignore_battery_optimization">Android limits the network activity while screen is off. In order to send the updated more than once in 15 minutes you need to disable battery optimization for this application.</string>
+    <string name="request_ignore_battery_optimization_cancel">Send updates as often as possible</string>
+    <string name="request_ignore_battery_optimization_ok">Open battery optimization settings</string>
+    <string name="request_ignore_battery_optimization_title">Battery usage warning</string>
     <string name="share_title">Share via…</string>
     <string name="share_link"><![CDATA[Track my location by clicking https://way.today/#%1$s!30m or use ID %1$s on the site way.today]]></string>
     <string name="share_subj">Way.Today location note</string>
     <string name="text_on">On</string>
     <string name="text_off">Off</string>
-    <string name="waytoday_in_background">is running in background</string>
+    <string name="waytoday_in_background">is running in the backroud</string>
+    <string name="waytoday_in_background_optimized">is running in the background. Battery optimization is on. Updates are as often as possible.</string>
+    <string name="waytoday_in_background_not_optimized">is running in the background. Battery optimization is off.</string>
+
 </resources>

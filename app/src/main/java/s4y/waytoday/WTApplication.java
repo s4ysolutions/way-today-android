@@ -44,7 +44,6 @@ public class WTApplication extends Application {
     ErrorReporter errorReporter;
 
     private CompositeDisposable appDisposables = new CompositeDisposable();
-    private AppNotification mAppNotification;
 
     public static WTApplication sApplication;
     private static FirebaseAnalytics sFirebaseAnalytics;
@@ -65,7 +64,7 @@ public class WTApplication extends Application {
     }
 
     public AppNotification getAppNotification() {
-        return mAppNotification;
+        return new AppNotification(this);
     }
 
     static public void fa(@NonNull final String event, Bundle bundle) {
@@ -145,7 +144,6 @@ public class WTApplication extends Application {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(errorNotification -> errorReporter.report(this, errorNotification)));
         mAppComponent.inject(this);
-        mAppNotification = new AppNotification(this);
     }
 
 }

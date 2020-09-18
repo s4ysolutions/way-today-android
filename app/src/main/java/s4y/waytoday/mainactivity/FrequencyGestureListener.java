@@ -1,6 +1,14 @@
 package s4y.waytoday.mainactivity;
 
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Rect;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -23,7 +31,7 @@ public class FrequencyGestureListener extends GestureDetector.SimpleOnGestureLis
 
     private final UserStrategy userStrategy;
 
-    public FrequencyGestureListener(@NonNull ViewGroup parent,
+    public FrequencyGestureListener( @NonNull ViewGroup parent,
                                     @NonNull PreferenceUpdateFrequency preference) {
         this.preference = preference;
         this.parent = parent;

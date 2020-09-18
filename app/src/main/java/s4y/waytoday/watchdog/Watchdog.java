@@ -62,10 +62,8 @@ public class Watchdog {
         }
         this.wakeupPIntent = PendingIntent.getBroadcast(context, 0, new Intent(ACTION_WATCHDOG), 0);
         if (Build.VERSION.SDK_INT >= 23) {
-            // alarmManager.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + Math.max(10*60*1000,interval), wakeupPIntent);
-            alarmManager.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + Math.max(0,interval), wakeupPIntent);
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + Math.max(90*1000,interval), wakeupPIntent);
         } else {
-            // alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + Math.max(10*60*1000,interval), wakeupPIntent);
             alarmManager.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + Math.max(0,interval), wakeupPIntent);
         }
         Log.d(LT, "Start alarm delay=" + interval);

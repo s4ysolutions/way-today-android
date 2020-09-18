@@ -7,9 +7,11 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.PowerManager;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.TaskStackBuilder;
+
 import s4y.waytoday.MainActivity;
 import s4y.waytoday.R;
 
@@ -22,10 +24,21 @@ public class AppNotification {
 
     public AppNotification(Context context) {
         this.context = context;
+        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        String message;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            message = context.getResources().getString(
+                    pm.isIgnoringBatteryOptimizations(context.getPackageName())
+                            ? R.string.waytoday_in_background_not_optimized
+                            : R.string.waytoday_in_background_optimized);
+        } else {
+            message = context.getResources().getString(R.string.waytoday_in_background);
+        }
         mBuilder =
                 new NotificationCompat.Builder(context, CHANNEL_ID)
                         .setContentTitle(context.getResources().getString(R.string.app_name))
-                        .setContentText(context.getResources().getString(R.string.waytoday_in_background))
+                        .setStyle(new
+                                NotificationCompat.BigTextStyle().bigText(message))
                         .setTicker(null)
                         .setSmallIcon(context.getApplicationInfo().icon);
     }

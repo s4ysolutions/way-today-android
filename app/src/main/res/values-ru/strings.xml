@@ -21,11 +21,17 @@
     <string name="request_permission_title">Дополнительное разрешение</string>
     <string name="request_location_permission">Позволить определять местоположение</string>
     <string name="id_request_failed">не получен</string>
+    <string name="request_ignore_battery_optimization">Андроид ограничивает работу сети при выключенном экране. Чтобы отправлять изменения чаще, чем раз в 15 минут, необходимо отключить оптимизацию использования батареи для этого приложения.</string>
+    <string name="request_ignore_battery_optimization_cancel">Оправлять изменения не чаще, чем возможно</string>
+    <string name="request_ignore_battery_optimization_ok">Открыть настройки использования батареи</string>
+    <string name="request_ignore_battery_optimization_title">Предупреждение об использовании батареи</string>
     <string name="share_title">Отправить местоположение…</string>
     <string name="share_link"><![CDATA[Мое положение доступно по ссылке https://way.today/#%1$s!30m или по коду %1$s на сайте простопуть.рф]]></string>
     <string name="share_subj">Ссобщение с сервиса Way.Today</string>
     <string name="text_on">Вкл</string>
     <string name="text_off">Выкл</string>
     <string name="waytoday_in_background">Работает в фоновом режиме</string>
+    <string name="waytoday_in_background_optimized">Работает в фоновом режиме. Оптимизация использования батареи включена. Позиция обновляется так часто, как возможно.</string>
+    <string name="waytoday_in_background_not_optimized">Работает в фоновом режиме. Оптимизация батареи отключена.</string>
 
 </resources>
