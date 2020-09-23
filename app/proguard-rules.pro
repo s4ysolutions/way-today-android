@@ -35,3 +35,4 @@
 
 # Ignores: can't find referenced method from grpc-testing's compileOnly dependency on Truth
 -dontwarn io.grpc.testing.DeadlineSubject
+-keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
