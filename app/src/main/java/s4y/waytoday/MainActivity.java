@@ -11,13 +11,11 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.provider.Settings;
 import android.util.Log;
 import android.util.SparseArray;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -32,10 +30,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.view.GestureDetectorCompat;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
-import butterknife.OnTouch;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import s4y.waytoday.background.BackgroundService;
@@ -69,59 +63,32 @@ public class MainActivity extends AppCompatActivity {
     @Inject
     PreferenceRequestedIgnoreOptimization mRequestedIgnoreOptimization;
 
-    @BindView(R.id.title_current)
     TextView mTextViewTitleCurrent;
-    @BindView(R.id.title_prev_1)
     TextView mTextViewTitlePrev1;
-    @BindView(R.id.title_prev_2)
     TextView mTextViewTitlePrev2;
-    @BindView(R.id.title_prev_3)
     TextView mTextViewTitlePrev3;
-    @BindView(R.id.title_next_1)
     TextView mTextViewTitleNext1;
-    @BindView(R.id.title_next_2)
     TextView mTextViewTitleNext2;
-    @BindView(R.id.title_next_3)
     TextView mTextViewTitleNext3;
-    @BindView(R.id.row_current)
     View mViewRowCurrent;
-    @BindView(R.id.gesture_controller)
     ViewGroup mViewGestureController;
-    @BindView(R.id.switch_on)
     ImageView mImageBtnOn;
-    @BindView(R.id.switch_off)
     ImageView mImageBtnOff;
-    @BindView(R.id.status_tracking_off)
     ImageView mLedTrackingOff;
-    @BindView(R.id.status_tracking)
     ImageView mLedTrackingUnknown;
-    @BindView(R.id.status_tracking_suspended)
     ImageView mLedTrackingSuspended;
-    @BindView(R.id.status_tracking_on)
     ImageView mLedTrackingOn;
-    @BindView(R.id.textID)
     TextView mTextID;
-    @BindView(R.id.btn_track_id)
     ImageView mBtnTrackID;
-    @BindView(R.id.status_gps_wait)
     ImageView mLedGpsWait;
-    @BindView(R.id.status_gps_new)
     ImageView mLedGpsNew;
-    @BindView(R.id.status_upload_empty)
     ImageView mLedUploadEmpty;
-    @BindView(R.id.status_upload_queue)
     ImageView mLedUploadQueue;
-    @BindView(R.id.status_upload_uploading)
     ImageView mLedUploadUploading;
-    @BindView(R.id.status_upload_error)
     ImageView mLedUploadError;
-    @BindView(R.id.btn_sound_on)
     ImageView mBtnSoundOn;
-    @BindView(R.id.btn_sound_off)
     ImageView mBtnSoundOff;
-    @BindView(R.id.text_on)
     TextView mTextOn;
-    @BindView(R.id.text_off)
     TextView mTextOff;
 
     private CompositeDisposable resumeDisposables;
@@ -137,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
     private BackgroundService mBackgroundService;
 
     @NonNull
-    private ServiceConnection mServiceConnection = new ServiceConnection() {
+    private final ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName className,
                                        @NonNull IBinder binder) {
@@ -161,13 +128,41 @@ public class MainActivity extends AppCompatActivity {
         updateLedBackground();
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         ((WTApplication) getApplication()).getAppComponent().inject(this);
 
         setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
+        mTextViewTitleCurrent = findViewById(R.id.title_current);
+        mTextViewTitlePrev1 = findViewById(R.id.title_prev_1);
+        mTextViewTitlePrev2 = findViewById(R.id.title_prev_2);
+        mTextViewTitlePrev3 = findViewById(R.id.title_prev_3);
+        mTextViewTitleNext1 = findViewById(R.id.title_next_1);
+        mTextViewTitleNext2 = findViewById(R.id.title_next_2);
+        mTextViewTitleNext3 = findViewById(R.id.title_next_3);
+        mViewRowCurrent = findViewById(R.id.row_current);
+        mViewGestureController = findViewById(R.id.gesture_controller);
+        mImageBtnOn = findViewById(R.id.switch_on);
+        mImageBtnOff = findViewById(R.id.switch_off);
+        mLedTrackingOff = findViewById(R.id.status_tracking_off);
+        mLedTrackingUnknown = findViewById(R.id.status_tracking);
+        mLedTrackingSuspended = findViewById(R.id.status_tracking_suspended);
+        mLedTrackingOn = findViewById(R.id.status_tracking_on);
+        mTextID = findViewById(R.id.textID);
+        mBtnTrackID = findViewById(R.id.btn_track_id);
+        mLedGpsWait = findViewById(R.id.status_gps_wait);
+        mLedGpsNew = findViewById(R.id.status_gps_new);
+        mLedUploadEmpty = findViewById(R.id.status_upload_empty);
+        mLedUploadQueue = findViewById(R.id.status_upload_queue);
+        mLedUploadUploading = findViewById(R.id.status_upload_uploading);
+        mLedUploadError = findViewById(R.id.status_upload_error);
+        mBtnSoundOn = findViewById(R.id.btn_sound_on);
+        mBtnSoundOff = findViewById(R.id.btn_sound_off);
+        mTextOn = findViewById(R.id.text_on);
+        mTextOff = findViewById(R.id.text_off);
+
         mTextViewTitlePrev3.setTag(R.id.TAG_IS_TITLE, true);
         mTextViewTitlePrev2.setTag(R.id.TAG_IS_TITLE, true);
         mTextViewTitlePrev1.setTag(R.id.TAG_IS_TITLE, true);
@@ -186,6 +181,126 @@ public class MainActivity extends AppCompatActivity {
         mTextOnAnimationFadeOut.setAnimationListener(textOnOffAnimationListener);
         mTextOffAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout_on_off);
         mTextOffAnimationFadeOut.setAnimationListener(textOnOffAnimationListener);
+
+        findViewById(R.id.switch_on).setOnTouchListener((v, event) -> {
+            if (isSwitching) return true;
+            startService();
+            MediaPlayerUtils.getInstance(this).playSwitchSound(this);
+            isSwitching = true;
+            mImageBtnOff.setVisibility(View.VISIBLE);
+//        mImageBtnOff.setAlpha(0f);
+            mImageBtnOff.startAnimation(mSwitchAnimationFadeIn);
+            mImageBtnOn.startAnimation(mSwitchAnimationFadeOut);
+            mSwitchAnimationFadeOut.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    isSwitching = false;
+                    mSwitchAnimationFadeOut.setAnimationListener(null);
+                    mIsActive.set(true);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+
+                }
+            });
+            mTextOff.setVisibility(View.GONE);
+            mTextOn.setVisibility(View.VISIBLE);
+            mTextOn.setAlpha(1);
+            mTextOn.startAnimation(mTextOnAnimationFadeOut);
+            WTApplication.faOn();
+            return true;
+        });
+
+        findViewById(R.id.gesture_controller).setOnTouchListener((v, event) -> {
+            if (mDetector.onTouchEvent(event)) {
+                if (BuildConfig.DEBUG) {
+                    Log.d(LT, "R.id.gesture_controller OnTouch gesture detected");
+                }
+                return true;
+            }
+            if (BuildConfig.DEBUG) {
+                Log.d(LT, "R.id.gesture_controller OnTouch gesture not detected");
+            }
+            return super.onTouchEvent(event);
+        });
+
+        findViewById(R.id.switch_off).setOnClickListener((View view) -> {
+            if (isSwitching) return;
+            stopService();
+            MediaPlayerUtils.getInstance(this).playSwitchSound(this);
+            isSwitching = true;
+            mImageBtnOn.setVisibility(View.VISIBLE);
+            //    mImageBtnOn.setAlpha(0f);
+            mImageBtnOn.startAnimation(mSwitchAnimationFadeIn);
+            mImageBtnOff.startAnimation(mSwitchAnimationFadeOut);
+            mSwitchAnimationFadeOut.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                    isSwitching = false;
+                    mSwitchAnimationFadeOut.setAnimationListener(null);
+                    mIsActive.set(false);
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+
+                }
+            });
+            mTextOff.setVisibility(View.VISIBLE);
+            mTextOff.setAlpha(1);
+            mTextOff.startAnimation(mTextOffAnimationFadeOut);
+            WTApplication.faOff();
+        });
+
+        findViewById(R.id.btn_track_id).setOnClickListener((View view) -> {
+            mBtnTrackID.setAlpha(alphaIDinProgress);
+            mTextID.setAlpha(alphaIDinProgress);
+            IDService.enqueueRetrieveId(this, mTrackID.get());
+            WTApplication.faRequestID();
+        });
+
+        findViewById(R.id.btn_sound_on).setOnClickListener((View v) -> {
+            mSound.set(false);
+            updateSound();
+            WTApplication.faSoundOn();
+        });
+
+        findViewById(R.id.btn_sound_off).setOnClickListener((View v) -> {
+            mSound.set(true);
+            updateSound();
+            WTApplication.faSoundOff();
+        });
+
+        findViewById(R.id.btn_way_today).setOnClickListener((View v) ->{
+            if (mTrackID.isNotSet()) return;
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://way.today/#" + mTrackID.get()));
+            startActivity(browserIntent);
+            WTApplication.faVisit();
+        });
+
+        findViewById(R.id.btn_share).setOnClickListener((View v) -> {
+            if (mTrackID.isNotSet()) return;
+            String txt = String.format(getResources().getString(R.string.share_link), mTrackID.get());
+            Intent sendIntent = new Intent();
+            sendIntent.setAction(Intent.ACTION_SEND);
+            sendIntent.putExtra(Intent.EXTRA_TEXT, txt);
+            sendIntent.putExtra(Intent.EXTRA_SUBJECT, getResources().getString(R.string.share_subj));
+            // sendIntent.setType("message/rfc822");
+            sendIntent.setType("text/plain");
+            startActivity(Intent.createChooser(sendIntent, getResources().getString(R.string.share_title)));
+            WTApplication.faShare();
+        });
     }
 
     @Override
@@ -262,21 +377,7 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
     }
 
-    @OnTouch(R.id.gesture_controller)
-    public boolean detectGesture(MotionEvent event) {
-        if (mDetector.onTouchEvent(event)) {
-            if (BuildConfig.DEBUG) {
-                Log.d(LT, "R.id.gesture_controller OnTouch gesture detected");
-            }
-            return true;
-        }
-        if (BuildConfig.DEBUG) {
-            Log.d(LT, "R.id.gesture_controller OnTouch gesture not detected");
-        }
-        return super.onTouchEvent(event);
-    }
-
-    private Animation.AnimationListener textOnOffAnimationListener = new Animation.AnimationListener() {
+    private final Animation.AnimationListener textOnOffAnimationListener = new Animation.AnimationListener() {
         @Override
         public void onAnimationStart(Animation animation) {
 
@@ -294,44 +395,9 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private boolean mLedGpsNewAnymated = false;
+    private boolean mLedGpsNewAnimated = false;
     private static final float alphaIDinProgress = 0.3f;
     private static final float alphaIDnotInProgress = 0.9f;
-
-    @OnClick(R.id.switch_on)
-    public void switchOn(View view) {
-        if (isSwitching) return;
-        startService();
-        MediaPlayerUtils.getInstance(this).playSwitchSound(this);
-        isSwitching = true;
-        mImageBtnOff.setVisibility(View.VISIBLE);
-//        mImageBtnOff.setAlpha(0f);
-        mImageBtnOff.startAnimation(mSwitchAnimationFadeIn);
-        mImageBtnOn.startAnimation(mSwitchAnimationFadeOut);
-        mSwitchAnimationFadeOut.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                isSwitching = false;
-                mSwitchAnimationFadeOut.setAnimationListener(null);
-                mIsActive.set(true);
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-
-            }
-        });
-        mTextOff.setVisibility(View.GONE);
-        mTextOn.setVisibility(View.VISIBLE);
-        mTextOn.setAlpha(1);
-        mTextOn.startAnimation(mTextOnAnimationFadeOut);
-        WTApplication.faOn();
-    }
 
     long requestCount = 0;
 
@@ -452,39 +518,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @OnClick(R.id.switch_off)
-    public void switchOff(View view) {
-        if (isSwitching) return;
-        stopService();
-        MediaPlayerUtils.getInstance(this).playSwitchSound(this);
-        isSwitching = true;
-        mImageBtnOn.setVisibility(View.VISIBLE);
-        //    mImageBtnOn.setAlpha(0f);
-        mImageBtnOn.startAnimation(mSwitchAnimationFadeIn);
-        mImageBtnOff.startAnimation(mSwitchAnimationFadeOut);
-        mSwitchAnimationFadeOut.setAnimationListener(new Animation.AnimationListener() {
-            @Override
-            public void onAnimationStart(Animation animation) {
-
-            }
-
-            @Override
-            public void onAnimationEnd(Animation animation) {
-                isSwitching = false;
-                mSwitchAnimationFadeOut.setAnimationListener(null);
-                mIsActive.set(false);
-            }
-
-            @Override
-            public void onAnimationRepeat(Animation animation) {
-
-            }
-        });
-        mTextOff.setVisibility(View.VISIBLE);
-        mTextOff.setAlpha(1);
-        mTextOff.startAnimation(mTextOffAnimationFadeOut);
-        WTApplication.faOff();
-    }
 
     private void updateAllViews() {
         updateUserStrategyChooser();
@@ -496,13 +529,6 @@ public class MainActivity extends AppCompatActivity {
         hideOnOff();
     }
 
-    @OnClick(R.id.btn_track_id)
-    public void newTrackID(View view) {
-        mBtnTrackID.setAlpha(alphaIDinProgress);
-        mTextID.setAlpha(alphaIDinProgress);
-        IDService.enqueueRetrieveId(this, mTrackID.get());
-        WTApplication.faRequestID();
-    }
 
     private void updateTrackID() {
         float alpha = (IDService.isProgress() && !IDService.sFailed)
@@ -526,7 +552,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private Animation.AnimationListener ledGpsNewAnimationListener = new Animation.AnimationListener() {
+    private final Animation.AnimationListener ledGpsNewAnimationListener = new Animation.AnimationListener() {
         @Override
         public void onAnimationStart(Animation animation) {
 
@@ -534,7 +560,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onAnimationEnd(Animation animation) {
-            mLedGpsNewAnymated = false;
+            mLedGpsNewAnimated = false;
             mLedGpsNew.setVisibility(View.GONE);
         }
 
@@ -544,7 +570,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
     private boolean sUploading;
-    private Animation.AnimationListener ledUploadingAnimationListener = new Animation.AnimationListener() {
+    private final Animation.AnimationListener ledUploadingAnimationListener = new Animation.AnimationListener() {
         @Override
         public void onAnimationStart(Animation animation) {
 
@@ -569,13 +595,13 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateLedGpsNew() {
         if (BuildConfig.DEBUG) {
-            Log.d(LT, "updateLedGpsNew " + mLedGpsNewAnymated);
+            Log.d(LT, "updateLedGpsNew " + mLedGpsNewAnimated);
         }
-        if (mLedGpsNewAnymated)
+        if (mLedGpsNewAnimated)
             return;
         mLedGpsNew.setVisibility(View.VISIBLE);
         mLedGpsNew.setAlpha(1.0f);
-        mLedGpsNewAnymated = true;
+        mLedGpsNewAnimated = true;
         mLedGpsNew.startAnimation(mLedGpsNewAnimationFadeOut);
     }
 
@@ -630,22 +656,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @SuppressWarnings("unused")
-    @OnClick(R.id.btn_sound_on)
-    void onSoundOnClick(View v) {
-        mSound.set(false);
-        updateSound();
-        WTApplication.faSoundOn();
-    }
-
-    @SuppressWarnings("unused")
-    @OnClick(R.id.btn_sound_off)
-    void onSoundOffClick(View v) {
-        mSound.set(true);
-        updateSound();
-        WTApplication.faSoundOff();
-    }
-
     private void startService() {
         if (mBackgroundService != null) {
             mBackgroundService.start(false);
@@ -695,28 +705,6 @@ public class MainActivity extends AppCompatActivity {
             mPermissionRequests.delete(requestCode);
             request.restarter.restart();
         }
-    }
-
-    @OnClick(R.id.btn_share)
-    public void onShareBtnClick(View v) {
-        if (mTrackID.isNotSet()) return;
-        String txt = String.format(getResources().getString(R.string.share_link), mTrackID.get());
-        Intent sendIntent = new Intent();
-        sendIntent.setAction(Intent.ACTION_SEND);
-        sendIntent.putExtra(Intent.EXTRA_TEXT, txt);
-        sendIntent.putExtra(Intent.EXTRA_SUBJECT, getResources().getString(R.string.share_subj));
-        // sendIntent.setType("message/rfc822");
-        sendIntent.setType("text/plain");
-        startActivity(Intent.createChooser(sendIntent, getResources().getString(R.string.share_title)));
-        WTApplication.faShare();
-    }
-
-    @OnClick(R.id.btn_way_today)
-    public void onWayToday(View v) {
-        if (mTrackID.isNotSet()) return;
-        Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://way.today/#" + mTrackID.get()));
-        startActivity(browserIntent);
-        WTApplication.faVisit();
     }
 
     @SuppressLint("MissingSuperCall")
