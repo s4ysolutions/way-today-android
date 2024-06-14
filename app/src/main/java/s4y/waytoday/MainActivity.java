@@ -18,12 +18,16 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GestureDetectorCompat;
 
+import java.util.function.Consumer;
+
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import s4y.gps.sdk.GPSUpdate;
 import s4y.gps.sdk.android.GPSPermissionManager;
 import s4y.gps.sdk.android.GPSPowerManager;
+import s4y.gps.sdk.android.GPSUpdatesForegroundService;
 import s4y.gps.sdk.dependencies.IGPSUpdatesProvider;
 import s4y.waytoday.analytics.Analytics;
 import s4y.waytoday.errors.ErrorsObservable;
@@ -33,6 +37,8 @@ import s4y.waytoday.preferences.PreferenceUpdateFrequency;
 import s4y.waytoday.sound.MediaPlayerUtils;
 import s4y.waytoday.strategies.UserStrategy;
 import solutions.s4y.waytoday.sdk.AndroidWayTodayClient;
+import solutions.s4y.waytoday.sdk.ITrackIdChangeListener;
+import solutions.s4y.waytoday.sdk.IUploadingLocationsStatusChangeListener;
 import solutions.s4y.waytoday.sdk.UploadingLocationsStatus;
 
 public class MainActivity extends AppCompatActivity {
@@ -309,10 +315,10 @@ public class MainActivity extends AppCompatActivity {
                 .subject
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(ignored -> updateAllViews()));
-        mWTClient.wtClient.addTrackIdChangeListener(this::updateTrackIDWithSound);
-        mWTClient.gpsUpdatesManager.getStatus().addListener(this::onTrackingStatusChange);
-        mWTClient.gpsUpdatesManager.getLast().addListener(this::onGPSUpdate);
-        mWTClient.wtClient.addUploadingLocationsStatusChangeListener(this::onUploadStatusChanged);
+        mWTClient.wtClient.addTrackIdChangeListener(updateTrackIDWithSound);
+        mWTClient.gpsUpdatesManager.getStatus().addListener(onTrackingStatusChange);
+        mWTClient.gpsUpdatesManager.getLast().addListener(onGPSUpdate);
+        mWTClient.wtClient.addUploadingLocationsStatusChangeListener(this.onUploadStatusChanged);
         if (!mWTClient.wtClient.hasTrackerId()) {
             mWTClient.enqueueTrackIdWorkRequest(this);
         }
@@ -332,18 +338,12 @@ public class MainActivity extends AppCompatActivity {
             resumeDisposables.clear();
             resumeDisposables = null;
         }
-        mWTClient.wtClient.removeTrackIdChangeListener(this::updateTrackIDWithSound);
-        mWTClient.gpsUpdatesManager.getStatus().removeListener(this::onTrackingStatusChange);
-        mWTClient.gpsUpdatesManager.getLast().removeListener(this::onGPSUpdate);
-        mWTClient.wtClient.removeUploadingLocationsStatusChangeListener(this::onUploadStatusChanged);
-        /* TODO:
-        if (mIsActive.isOn()) {
-            BackgroundService.startService(this, true);
-        }
-        if (mBackgroundService != null) {
-            unbindService(mServiceConnection);
-        }
-        */
+        mWTClient.wtClient.removeTrackIdChangeListener(updateTrackIDWithSound);
+        mWTClient.gpsUpdatesManager.getStatus().removeListener(onTrackingStatusChange);
+        mWTClient.gpsUpdatesManager.getLast().removeListener(onGPSUpdate);
+        mWTClient.wtClient.removeUploadingLocationsStatusChangeListener(this.onUploadStatusChanged);
+        if (mWTClient.isTrackingOn() && !GPSPermissionManager.needPermissionRequest(this))
+            GPSUpdatesForegroundService.start(this);
         super.onPause();
     }
 
@@ -408,29 +408,25 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private Unit onTrackingStatusChange(IGPSUpdatesProvider.Status status) {
-        Log.d("updateSwitch", "updateSwitch status=" + status.toString());
-        runOnUiThread(() -> {
-            updateSwitchOnOff();
-            updateLedTracking();
-        });
-        return Unit.INSTANCE;
-    }
+    private final Function1<IGPSUpdatesProvider.Status, Unit> onTrackingStatusChange =
+            (IGPSUpdatesProvider.Status status) -> {
+                Log.d("updateSwitch", "updateSwitch status=" + status.toString());
+                runOnUiThread(() -> {
+                    updateSwitchOnOff();
+                    updateLedTracking();
+                });
+                return Unit.INSTANCE;
+            };
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus != sHasFocus) {
             sHasFocus = hasFocus;
+            if (sHasFocus) {
+                GPSUpdatesForegroundService.removeFromForeground(this);
+            }
         }
-        /* TODO:
-        if (mBackgroundService != null) {
-            if (sHasFocus)
-                mBackgroundService.removeFromForeground();
-            else
-                mBackgroundService.putInForeground();
-        }
-        */
     }
 
     private void updateLedTracking() {
@@ -490,15 +486,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void updateTrackIDWithSound(String notUsed) {
-        if (BuildConfig.DEBUG) {
-            Log.d(LT, "updateTrackIDWithSound ${notUsed}");
+    private final ITrackIdChangeListener updateTrackIDWithSound = new ITrackIdChangeListener() {
+        @Override
+        public void onTrackId(@NonNull String trackID) {
+            if (BuildConfig.DEBUG) {
+                Log.d(LT, "updateTrackIDWithSound ${notUsed}");
+            }
+            runOnUiThread(() -> {
+                updateTrackID();
+                MediaPlayerUtils.getInstance(MainActivity.this).playTrackID(MainActivity.this);
+            });
         }
-        runOnUiThread(() -> {
-            updateTrackID();
-            MediaPlayerUtils.getInstance(this).playTrackID(this);
-        });
-    }
+    };
 
     private void updateTrackID() {
         boolean inProgress = mWTClient.wtClient.isRequestNewTrackerIdInProgress();
@@ -566,7 +565,7 @@ public class MainActivity extends AppCompatActivity {
         mTextOff.setVisibility(View.GONE);
     }
 
-    private Unit onGPSUpdate(GPSUpdate gpsUpdate) {
+    private final Function1<GPSUpdate, Unit> onGPSUpdate = (GPSUpdate gpsUpdate) -> {
         if (BuildConfig.DEBUG) {
             Log.d(LT, "onGPSUpdate " + gpsUpdate.toString());
         }
@@ -575,7 +574,7 @@ public class MainActivity extends AppCompatActivity {
             updateLedGpsNew();
         });
         return Unit.INSTANCE;
-    }
+    };
 
     private void updateLedGpsNew() {
         if (BuildConfig.DEBUG) {
@@ -593,14 +592,17 @@ public class MainActivity extends AppCompatActivity {
         mLedUploadUploading.startAnimation(mLedUploadingAnimationFadeOut);
     }
 
-    private void onUploadStatusChanged(UploadingLocationsStatus status) {
-        if (BuildConfig.DEBUG) {
-            Log.d(LT, "onUploadStatusChanged " + status.toString());
+    private final IUploadingLocationsStatusChangeListener onUploadStatusChanged= new IUploadingLocationsStatusChangeListener() {
+        @Override
+        public void onStatusChange(UploadingLocationsStatus status) {
+            if (BuildConfig.DEBUG) {
+                Log.d(LT, "onUploadStatusChanged " + status.toString());
+            }
+            runOnUiThread(() -> {
+                updateLedUploading();
+            });
         }
-        runOnUiThread(() -> {
-            updateLedUploading();
-        });
-    }
+    };
 
     private void updateLedUploading() {
         UploadingLocationsStatus status = mWTClient.wtClient.getUploadingLocationsStatus();

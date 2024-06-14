@@ -8,6 +8,7 @@ import javax.inject.Inject;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import s4y.gps.sdk.android.GPSPermissionManager;
 import s4y.gps.sdk.android.GPSUpdatesForegroundService;
 import s4y.waytoday.dagger.DaggerAppComponent;
 import s4y.waytoday.dagger.DaggerDaggerAppComponent;
@@ -83,9 +84,13 @@ public class WTApplication extends Application {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             GPSUpdatesForegroundService.setNotificationChannelId("waytoday_gps_updates");
             GPSUpdatesForegroundService.setNotificationChannelName("WayToday GPS Updates");
-            GPSUpdatesForegroundService.setNotificationContentTitle("Stop WayToday tracking");
+            // GPSUpdatesForegroundService.setNotificationContentTitle("");
+            // GPSUpdatesForegroundService.setNotificationContent("WayToday Tracking");
             GPSUpdatesForegroundService.setUseApplicationNotificationSmallIcon(true);
         }
+
+        if (androidWayToday.isTrackingOn() && !GPSPermissionManager.needPermissionRequest(this))
+            GPSUpdatesForegroundService.start(this);
     }
 
     @Override
