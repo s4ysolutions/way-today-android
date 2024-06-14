@@ -15,7 +15,7 @@ public class UserStrategy implements Strategy {
     }
 
     @Override
-    public long getMinTime() {
+    public long getMinMs() {
         switch (preference.get()) {
             case HOUR1:
                 return 3600000;

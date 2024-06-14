@@ -1,22 +1,24 @@
 package s4y.waytoday;
 
 import android.app.Application;
-import android.content.Context;
-import android.os.Bundle;
+import android.os.Build;
 import android.os.StrictMode;
-import android.util.Log;
-
-import com.google.firebase.analytics.FirebaseAnalytics;
 
 import javax.inject.Inject;
 
-import androidx.annotation.NonNull;
-import androidx.multidex.MultiDex;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import s4y.gps.sdk.android.GPSUpdatesForegroundService;
+import s4y.waytoday.dagger.DaggerAppComponent;
+import s4y.waytoday.dagger.DaggerDaggerAppComponent;
+import s4y.waytoday.dagger.DaggerModuleApplication;
 import s4y.waytoday.errors.ErrorReporter;
 import s4y.waytoday.errors.ErrorsObservable;
-import s4y.waytoday.notifications.AppNotification;
+import s4y.waytoday.preferences.PreferenceSound;
+import s4y.waytoday.preferences.PreferenceUpdateFrequency;
+import s4y.waytoday.sound.MediaPlayerUtils;
+import solutions.s4y.waytoday.sdk.AndroidWayTodayClient;
+import solutions.s4y.waytoday.sdk.WayTodayError;
 
 public class WTApplication extends Application {
     static {
@@ -37,113 +39,64 @@ public class WTApplication extends Application {
         }
     }
 
-    private static final String LT = WTApplication.class.getSimpleName();
-
-    private AppComponent mAppComponent;
+    private DaggerAppComponent mDaggerAppComponent;
     @Inject
     ErrorReporter errorReporter;
+    @Inject
+    AndroidWayTodayClient androidWayToday;
+    @Inject
+    PreferenceUpdateFrequency mUserStrategyFrequency;
+    @Inject
+    PreferenceSound mSound;
 
-    private CompositeDisposable appDisposables = new CompositeDisposable();
+    private final CompositeDisposable appDisposables = new CompositeDisposable();
 
-    public static WTApplication sApplication;
-    private static FirebaseAnalytics sFirebaseAnalytics;
-
-    @Override
-    protected void attachBaseContext(Context base) {
-        super.attachBaseContext(base);
-        MultiDex.install(this);
+    protected s4y.waytoday.dagger.DaggerAppComponent prepareAppComponent() {
+        return DaggerDaggerAppComponent
+                .builder()
+                .daggerModuleApplication(new DaggerModuleApplication(this)).build();
     }
 
-    protected AppComponent prepareAppComponent() {
-        return DaggerAppComponent.builder()
-                .daggerApplicationModule(new DaggerApplicationModule(this)).build();
-    }
-
-    public AppComponent getAppComponent() {
-        return mAppComponent;
-    }
-
-    public AppNotification getAppNotification() {
-        return new AppNotification(this);
-    }
-
-    static public void fa(@NonNull final String event, Bundle bundle) {
-        if (sApplication == null) return;
-        if (sFirebaseAnalytics == null) {
-            sFirebaseAnalytics = FirebaseAnalytics.getInstance(sApplication);
-        }
-        sFirebaseAnalytics.logEvent(event, bundle);
-        if (BuildConfig.DEBUG) {
-            Log.d(LT, "FA log " + event);
-        }
-    }
-
-    static public void fa(@NonNull final String event) {
-        fa(event, null);
-    }
-
-    static public void faRequestID() {
-        fa("wt_request_id");
-    }
-
-    static public void faOn() {
-        fa("wt_on");
-    }
-
-    static public void faOff() {
-        fa("wt_off");
-    }
-
-    static public void faShare() {
-        fa("wt_share");
-    }
-
-    static public void faVisit() {
-        fa("wt_visit");
-    }
-
-    static public void faSoundOn() {
-        fa("wt_sound_on");
-    }
-
-    static public void faSoundOff() {
-        fa("wt_sound_off");
-    }
-
-    static public void faFreqFling(long freq) {
-        fa("wt_freq_fling");
-        Bundle bundle = new Bundle();
-        bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "wt_freq");
-        bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "Set update frequency");
-        bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "number");
-        bundle.putLong(FirebaseAnalytics.Param.VALUE, freq);
-        fa("wt_freq_set");
-    }
-
-    static public void faFreqTap(long freq) {
-        fa("wt_freq_tap");
-        Bundle bundle = new Bundle();
-        bundle.putString(FirebaseAnalytics.Param.ITEM_ID, "wt_freq");
-        bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, "Set update frequency");
-        bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "number");
-        bundle.putLong(FirebaseAnalytics.Param.VALUE, freq);
-        fa("wt_freq_set");
-    }
-
-    static public void faNoPermission() {
-        fa("wt_no_permission");
+    public s4y.waytoday.dagger.DaggerAppComponent getDaggerComponent() {
+        return mDaggerAppComponent;
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
-        sApplication = this;
-        mAppComponent = prepareAppComponent();
+        mDaggerAppComponent = prepareAppComponent();
+        mDaggerAppComponent.inject(this);
+
+        MediaPlayerUtils.setPreferenceSound(mSound);
+
         appDisposables.add(ErrorsObservable
                 .subject
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(errorNotification -> errorReporter.report(this, errorNotification)));
-        mAppComponent.inject(this);
+        androidWayToday.wtClient.addErrorsListener(this::onAndroidWayTodayClientError);
+
+        PreferenceUpdateFrequency.Frequencies current = mUserStrategyFrequency.get();
+        androidWayToday.gpsUpdatesManager.setIntervalSec(current.getSeconds());
+
+        GPSUpdatesForegroundService
+                .setUpdatesManager(androidWayToday.gpsUpdatesManager);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            GPSUpdatesForegroundService.setNotificationChannelId("waytoday_gps_updates");
+            GPSUpdatesForegroundService.setNotificationChannelName("WayToday GPS Updates");
+            GPSUpdatesForegroundService.setNotificationContentTitle("Stop WayToday tracking");
+            GPSUpdatesForegroundService.setUseApplicationNotificationSmallIcon(true);
+        }
     }
 
+    @Override
+    public void onTerminate() {
+        appDisposables.dispose();
+        androidWayToday.wtClient
+                .removeErrorsListener(this::onAndroidWayTodayClientError);
+        super.onTerminate();
+    }
+
+    private void onAndroidWayTodayClientError(WayTodayError error) {
+        ErrorsObservable.notify(error, false);
+    }
 }

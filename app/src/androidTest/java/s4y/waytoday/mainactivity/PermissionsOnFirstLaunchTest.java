@@ -19,7 +19,7 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
 import s4y.waytoday.MainActivity;
 import s4y.waytoday.R;
-import s4y.waytoday.TestComponent;
+import s4y.waytoday.TestDaggerAppComponent;
 import s4y.waytoday.WTApplication;
 import s4y.waytoday.locations.SensorGPS;
 import s4y.waytoday.permissions.PermissionRequestObservable;
@@ -72,7 +72,7 @@ public class PermissionsOnFirstLaunchTest {
     @Before
     public void before() throws Exception {
         WTApplication application = ApplicationProvider.getApplicationContext();
-        TestComponent component = (TestComponent) application.getAppComponent();
+        TestDaggerAppComponent component = (TestDaggerAppComponent) application.getDaggerComponent();
         component.inject(this);
 
         disposable = new CompositeDisposable();

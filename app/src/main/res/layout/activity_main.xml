@@ -346,28 +346,31 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:contentDescription="@string/status_tracking"
-                        app:srcCompat="@drawable/led_rect_off" />
-
-                    <ImageView
-                        android:id="@+id/status_tracking"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:contentDescription="@string/status_tracking"
                         app:srcCompat="@drawable/led_rect_gray" />
 
                     <ImageView
-                        android:id="@+id/status_tracking_suspended"
+                        android:id="@+id/status_tracking_warmup"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:contentDescription="@string/status_tracking"
-                        app:srcCompat="@drawable/led_rect_red" />
+                        app:srcCompat="@drawable/led_rect_off"
+                        tools:visibility="visible" />
+
+                    <ImageView
+                        android:id="@+id/status_tracking_error"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/status_tracking"
+                        app:srcCompat="@drawable/led_rect_red"
+                        tools:visibility="invisible" />
 
                     <ImageView
                         android:id="@+id/status_tracking_on"
                         android:layout_width="wrap_content"
                         android:layout_height="match_parent"
                         android:contentDescription="@string/status_tracking"
-                        app:srcCompat="@drawable/led_rect_green" />
+                        app:srcCompat="@drawable/led_rect_green"
+                        tools:visibility="visible" />
 
                 </FrameLayout>
 
@@ -380,6 +383,12 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="2">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/status_gps"
+                        app:srcCompat="@drawable/led_rect_gray"/>
 
                     <ImageView
                         android:id="@+id/status_gps_wait"
@@ -408,6 +417,12 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="2">
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/status_upload"
+                        app:srcCompat="@drawable/led_rect_gray"/>
 
                     <ImageView
                         android:id="@+id/status_upload_empty"

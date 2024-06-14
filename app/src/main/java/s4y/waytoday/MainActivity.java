@@ -1,21 +1,10 @@
 package s4y.waytoday;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.AlertDialog;
-import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
-import android.content.pm.PackageManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.os.PowerManager;
-import android.provider.Settings;
 import android.util.Log;
-import android.util.SparseArray;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -27,27 +16,24 @@ import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.core.view.GestureDetectorCompat;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
-import s4y.waytoday.background.BackgroundService;
+import kotlin.Unit;
+import s4y.gps.sdk.GPSUpdate;
+import s4y.gps.sdk.android.GPSPermissionManager;
+import s4y.gps.sdk.android.GPSPowerManager;
+import s4y.gps.sdk.dependencies.IGPSUpdatesProvider;
+import s4y.waytoday.analytics.Analytics;
 import s4y.waytoday.errors.ErrorsObservable;
-import s4y.waytoday.idservice.IDService;
 import s4y.waytoday.mainactivity.FrequencyGestureListener;
-import s4y.waytoday.permissions.PermissionRequest;
-import s4y.waytoday.permissions.PermissionRequestObservable;
-import s4y.waytoday.preferences.PreferenceIsTracking;
-import s4y.waytoday.preferences.PreferenceRequestedIgnoreOptimization;
 import s4y.waytoday.preferences.PreferenceSound;
-import s4y.waytoday.preferences.PreferenceTrackID;
 import s4y.waytoday.preferences.PreferenceUpdateFrequency;
 import s4y.waytoday.sound.MediaPlayerUtils;
 import s4y.waytoday.strategies.UserStrategy;
-import s4y.waytoday.upload.UploadJobService;
-
-import static s4y.waytoday.upload.UploadJobService.uploadStatus;
+import solutions.s4y.waytoday.sdk.AndroidWayTodayClient;
+import solutions.s4y.waytoday.sdk.UploadingLocationsStatus;
 
 public class MainActivity extends AppCompatActivity {
     private final static String LT = MainActivity.class.getSimpleName();
@@ -55,14 +41,11 @@ public class MainActivity extends AppCompatActivity {
     PreferenceUpdateFrequency mUserStrategyFrequency;
     public static boolean sHasFocus = false;
     @Inject
-    PreferenceIsTracking mIsActive;
-    @Inject
-    PreferenceTrackID mTrackID;
-    @Inject
     PreferenceSound mSound;
     @Inject
-    PreferenceRequestedIgnoreOptimization mRequestedIgnoreOptimization;
-
+    Analytics mAnalytics;
+    @Inject
+    AndroidWayTodayClient mWTClient;
     TextView mTextViewTitleCurrent;
     TextView mTextViewTitlePrev1;
     TextView mTextViewTitlePrev2;
@@ -74,9 +57,9 @@ public class MainActivity extends AppCompatActivity {
     ViewGroup mViewGestureController;
     ImageView mImageBtnOn;
     ImageView mImageBtnOff;
+    ImageView mLedTrackingWarmUp;
     ImageView mLedTrackingOff;
-    ImageView mLedTrackingUnknown;
-    ImageView mLedTrackingSuspended;
+    ImageView mLedTrackingError;
     ImageView mLedTrackingOn;
     TextView mTextID;
     ImageView mBtnTrackID;
@@ -100,8 +83,8 @@ public class MainActivity extends AppCompatActivity {
     private Animation mTextOnAnimationFadeOut;
     private Animation mTextOffAnimationFadeOut;
     private boolean isSwitching;
+    /*
     SparseArray<PermissionRequest> mPermissionRequests = new SparseArray<>(2);
-    private BackgroundService mBackgroundService;
 
     @NonNull
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
@@ -116,23 +99,14 @@ public class MainActivity extends AppCompatActivity {
             mBackgroundService = null;
             updateLedBackground();
         }
-    };
+    };*/
 
-    // for mocking purposes
-    protected void setBinder(IBinder binder) {
-        mBackgroundService = ((BackgroundService.LocationsServiceBinder) binder).getService();
-        if (sHasFocus)
-            mBackgroundService.removeFromForeground();
-        else
-            mBackgroundService.putInForeground();
-        updateLedBackground();
-    }
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ((WTApplication) getApplication()).getAppComponent().inject(this);
+        ((WTApplication) getApplication()).getDaggerComponent().inject(this);
 
         setContentView(R.layout.activity_main);
         mTextViewTitleCurrent = findViewById(R.id.title_current);
@@ -146,9 +120,9 @@ public class MainActivity extends AppCompatActivity {
         mViewGestureController = findViewById(R.id.gesture_controller);
         mImageBtnOn = findViewById(R.id.switch_on);
         mImageBtnOff = findViewById(R.id.switch_off);
+        mLedTrackingWarmUp = findViewById(R.id.status_tracking_warmup);
         mLedTrackingOff = findViewById(R.id.status_tracking_off);
-        mLedTrackingUnknown = findViewById(R.id.status_tracking);
-        mLedTrackingSuspended = findViewById(R.id.status_tracking_suspended);
+        mLedTrackingError = findViewById(R.id.status_tracking_error);
         mLedTrackingOn = findViewById(R.id.status_tracking_on);
         mTextID = findViewById(R.id.textID);
         mBtnTrackID = findViewById(R.id.btn_track_id);
@@ -170,7 +144,10 @@ public class MainActivity extends AppCompatActivity {
         mTextViewTitleNext2.setTag(R.id.TAG_IS_TITLE, true);
         mTextViewTitleNext3.setTag(R.id.TAG_IS_TITLE, true);
         mDetector = new GestureDetectorCompat(this,
-                new FrequencyGestureListener(mViewGestureController, mUserStrategyFrequency));
+                new FrequencyGestureListener(
+                        mAnalytics,
+                        mViewGestureController,
+                        mUserStrategyFrequency));
         mSwitchAnimationFadeIn = AnimationUtils.loadAnimation(this, R.anim.fadein400);
         mSwitchAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout400);
         mLedGpsNewAnimationFadeOut = AnimationUtils.loadAnimation(this, R.anim.fadeout300);
@@ -184,7 +161,10 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.switch_on).setOnTouchListener((v, event) -> {
             if (isSwitching) return true;
-            startService();
+            if (GPSPermissionManager.needPermissionRequest(this)) {
+                GPSPermissionManager.requestPermissions(this);
+            }
+            startTracking();
             MediaPlayerUtils.getInstance(this).playSwitchSound(this);
             isSwitching = true;
             mImageBtnOff.setVisibility(View.VISIBLE);
@@ -201,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onAnimationEnd(Animation animation) {
                     isSwitching = false;
                     mSwitchAnimationFadeOut.setAnimationListener(null);
-                    mIsActive.set(true);
+                    mWTClient.turnTrackingOn();
                 }
 
                 @Override
@@ -213,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
             mTextOn.setVisibility(View.VISIBLE);
             mTextOn.setAlpha(1);
             mTextOn.startAnimation(mTextOnAnimationFadeOut);
-            WTApplication.faOn();
+            mAnalytics.faOn();
             return true;
         });
 
@@ -232,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.switch_off).setOnClickListener((View view) -> {
             if (isSwitching) return;
-            stopService();
+            stopTracking();
             MediaPlayerUtils.getInstance(this).playSwitchSound(this);
             isSwitching = true;
             mImageBtnOn.setVisibility(View.VISIBLE);
@@ -249,7 +229,8 @@ public class MainActivity extends AppCompatActivity {
                 public void onAnimationEnd(Animation animation) {
                     isSwitching = false;
                     mSwitchAnimationFadeOut.setAnimationListener(null);
-                    mIsActive.set(false);
+                    // GPSUpdatesForegroundService subscribed to the status and will stop itself
+                    mWTClient.turnTrackingOff();
                 }
 
                 @Override
@@ -260,38 +241,43 @@ public class MainActivity extends AppCompatActivity {
             mTextOff.setVisibility(View.VISIBLE);
             mTextOff.setAlpha(1);
             mTextOff.startAnimation(mTextOffAnimationFadeOut);
-            WTApplication.faOff();
+            mAnalytics.faOff();
         });
 
         findViewById(R.id.btn_track_id).setOnClickListener((View view) -> {
             mBtnTrackID.setAlpha(alphaIDinProgress);
             mTextID.setAlpha(alphaIDinProgress);
-            IDService.enqueueRetrieveId(this, mTrackID.get());
-            WTApplication.faRequestID();
+            mWTClient.enqueueTrackIdWorkRequest(this);
+            mAnalytics.faRequestID();
         });
 
         findViewById(R.id.btn_sound_on).setOnClickListener((View v) -> {
             mSound.set(false);
             updateSound();
-            WTApplication.faSoundOn();
+            mAnalytics.faSoundOn();
         });
 
         findViewById(R.id.btn_sound_off).setOnClickListener((View v) -> {
             mSound.set(true);
             updateSound();
-            WTApplication.faSoundOff();
+            mAnalytics.faSoundOff();
         });
 
-        findViewById(R.id.btn_way_today).setOnClickListener((View v) ->{
-            if (mTrackID.isNotSet()) return;
-            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://way.today/#" + mTrackID.get()));
+        findViewById(R.id.btn_way_today).setOnClickListener((View v) -> {
+            if (!mWTClient.wtClient.hasTrackerId()) return;
+            Intent browserIntent = new Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("https://way.today/#" +
+                            mWTClient.wtClient.getCurrentTrackerId()));
             startActivity(browserIntent);
-            WTApplication.faVisit();
+            mAnalytics.faVisit();
         });
 
         findViewById(R.id.btn_share).setOnClickListener((View v) -> {
-            if (mTrackID.isNotSet()) return;
-            String txt = String.format(getResources().getString(R.string.share_link), mTrackID.get());
+            if (!mWTClient.wtClient.hasTrackerId()) return;
+            String txt = String.format(
+                    getResources().getString(R.string.share_link),
+                    mWTClient.wtClient.getCurrentTrackerId());
             Intent sendIntent = new Intent();
             sendIntent.setAction(Intent.ACTION_SEND);
             sendIntent.putExtra(Intent.EXTRA_TEXT, txt);
@@ -299,16 +285,13 @@ public class MainActivity extends AppCompatActivity {
             // sendIntent.setType("message/rfc822");
             sendIntent.setType("text/plain");
             startActivity(Intent.createChooser(sendIntent, getResources().getString(R.string.share_title)));
-            WTApplication.faShare();
+            mAnalytics.faShare();
         });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        Intent intent = new Intent(this, BackgroundService.class);
-        bindService(intent, mServiceConnection, Context.BIND_AUTO_CREATE);
-
         if (BuildConfig.DEBUG) {
             if (resumeDisposables != null) {
                 ErrorsObservable.notify(new Exception("resumeDisposables != null"));
@@ -318,46 +301,27 @@ public class MainActivity extends AppCompatActivity {
         resumeDisposables.add(mUserStrategyFrequency
                 .subject
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(userStrategy -> updateUserStrategyChooser()));
-        resumeDisposables.add(mUserStrategyFrequency
-                .subject
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(userStrategy -> requestIgnoreOptimization()));
-        resumeDisposables.add(mIsActive
-                .subject
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(userStrategy -> updateSwitch()));
-        resumeDisposables.add(BackgroundService.sensorGPS
-                .subjectTrackingState
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(state -> updateLedBackground()));
-        resumeDisposables.add(BackgroundService.sensorGPS
-                .subjectGPS
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(state -> updateLedGpsNew()));
-        resumeDisposables.add(PermissionRequestObservable
-                .subject
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(this::onPermissionRequest));
-        resumeDisposables.add(UploadJobService
-                .subjectStatus
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(status -> this.updateLedUploading()));
-        resumeDisposables.add(mTrackID
-                .subject
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(trackID -> {
-                    updateTrackID();
-                    MediaPlayerUtils.getInstance(this).playTrackID(this);
+                .subscribe(userStrategy -> {
+                    updateUserStrategyChooser();
+                    requestIgnoreOptimization();
                 }));
         resumeDisposables.add(ErrorsObservable
                 .subject
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(ignored -> updateAllViews()));
-        if (mTrackID.isNotSet()) {
-            IDService.enqueueRetrieveId(this, "");
+        mWTClient.wtClient.addTrackIdChangeListener(this::updateTrackIDWithSound);
+        mWTClient.gpsUpdatesManager.getStatus().addListener(this::onTrackingStatusChange);
+        mWTClient.gpsUpdatesManager.getLast().addListener(this::onGPSUpdate);
+        mWTClient.wtClient.addUploadingLocationsStatusChangeListener(this::onUploadStatusChanged);
+        if (!mWTClient.wtClient.hasTrackerId()) {
+            mWTClient.enqueueTrackIdWorkRequest(this);
         }
         updateAllViews();
+        if (mWTClient.isTrackingOn() && GPSPermissionManager.needPermissionRequest(this)) {
+            runOnUiThread(() -> {
+                GPSPermissionManager.requestPermissions(this);
+            });
+        }
     }
 
     @Override
@@ -368,12 +332,18 @@ public class MainActivity extends AppCompatActivity {
             resumeDisposables.clear();
             resumeDisposables = null;
         }
+        mWTClient.wtClient.removeTrackIdChangeListener(this::updateTrackIDWithSound);
+        mWTClient.gpsUpdatesManager.getStatus().removeListener(this::onTrackingStatusChange);
+        mWTClient.gpsUpdatesManager.getLast().removeListener(this::onGPSUpdate);
+        mWTClient.wtClient.removeUploadingLocationsStatusChangeListener(this::onUploadStatusChanged);
+        /* TODO:
         if (mIsActive.isOn()) {
             BackgroundService.startService(this, true);
         }
         if (mBackgroundService != null) {
             unbindService(mServiceConnection);
         }
+        */
         super.onPause();
     }
 
@@ -401,50 +371,20 @@ public class MainActivity extends AppCompatActivity {
 
     long requestCount = 0;
 
-    @SuppressLint("BatteryLife")
     private void requestIgnoreOptimization() {
-        if (requestCount++ < 3) {
+        if (requestCount++ < 3)
             return;
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            UserStrategy userStrategy = new UserStrategy(mUserStrategyFrequency);
-            String packageName = getPackageName();
-            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-            if (userStrategy.getMinTime() < 15 * 60 * 1000 && !pm.isIgnoringBatteryOptimizations(packageName) && !mRequestedIgnoreOptimization.requested()) {
-                //Handler handler = new Handler(getMainLooper());
-                //handler.post(() -> {
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                builder.setMessage(R.string.request_ignore_battery_optimization)
-                        .setTitle(R.string.request_ignore_battery_optimization_title)
-                        .setPositiveButton(R.string.request_ignore_battery_optimization_ok,
-                                (dialog, which) -> {
-                                    mRequestedIgnoreOptimization.setRequested();
-                                    dialog.dismiss();
-                                    //                       handler.post(new Runnable() {
-                                    //                         @Override
-                                    //                        public void run() {
-                                    Intent intent = new Intent();
-                                    intent.setAction(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
-                                    // see Manifest
-                                    // intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-                                    // intent.setData(Uri.parse("package:" + packageName));
-                                    startActivity(intent);
-                                    //                       }
-                                    //                  });
-                                })
-                        .setNegativeButton(R.string.request_ignore_battery_optimization_cancel, (dialog, which) -> {
-                            mRequestedIgnoreOptimization.setRequested();
-                            dialog.cancel();
-                        })
-                        .show();
-                //});
-            }
-        }
+        boolean needRequestIgnoreOptimization =
+                GPSPowerManager.needRequestIgnoreOptimization(this);
+        if (!needRequestIgnoreOptimization)
+            return;
+        GPSPowerManager.requestIgnoreOptimization(this);
     }
 
     private void updateUserStrategyChooser() {
         PreferenceUpdateFrequency.Frequencies current =
                 mUserStrategyFrequency.get();
+        mWTClient.gpsUpdatesManager.setIntervalSec(current.getSeconds());
 
         mTextViewTitlePrev3.setText(current.getTitleResID(-3));
         mTextViewTitlePrev2.setText(current.getTitleResID(-2));
@@ -456,8 +396,10 @@ public class MainActivity extends AppCompatActivity {
         requestIgnoreOptimization();
     }
 
-    private void updateSwitch() {
-        if (mIsActive.isOn()) {
+    private void updateSwitchOnOff() {
+        boolean isTrackingOn = mWTClient.isTrackingOn();
+        Log.d("updateSwitch", "updateSwitch isTrackingOn=" + isTrackingOn);
+        if (isTrackingOn) {
             mImageBtnOff.setVisibility(View.VISIBLE);
             mImageBtnOn.setVisibility(View.GONE);
         } else {
@@ -466,63 +408,81 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private Unit onTrackingStatusChange(IGPSUpdatesProvider.Status status) {
+        Log.d("updateSwitch", "updateSwitch status=" + status.toString());
+        runOnUiThread(() -> {
+            updateSwitchOnOff();
+            updateLedTracking();
+        });
+        return Unit.INSTANCE;
+    }
+
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus != sHasFocus) {
             sHasFocus = hasFocus;
         }
+        /* TODO:
         if (mBackgroundService != null) {
             if (sHasFocus)
                 mBackgroundService.removeFromForeground();
             else
                 mBackgroundService.putInForeground();
         }
+        */
     }
 
-    private void updateLedBackground() {
-        if (mBackgroundService == null) {
-            if (BuildConfig.DEBUG) {
-                Log.d(LT, "updateLedBackground: mBackgroundService=null");
-            }
-            mLedTrackingOff.setVisibility(View.GONE);
-            mLedTrackingUnknown.setVisibility(View.VISIBLE);
-            mLedTrackingSuspended.setVisibility(View.GONE);
+    private void updateLedTracking() {
+        if (BuildConfig.DEBUG) {
+            Log.d(LT, String.format("updateLedTracking: status=%s, needPermissionRequest=%b",
+                    mWTClient.gpsUpdatesManager.getStatus(),
+                    GPSPermissionManager.needPermissionRequest(this)
+            ));
+        }
+
+        if (!mWTClient.gpsUpdatesManager.getStatus().isIdle()) {
+            mLedGpsWait.setVisibility(View.VISIBLE);
+            mLedUploadEmpty.setVisibility(View.VISIBLE);
+        }
+
+        if (mWTClient.gpsUpdatesManager.getStatus().isIdle()) {
+            mLedTrackingOff.setVisibility(View.VISIBLE);
+            mLedTrackingWarmUp.setVisibility(View.GONE);
             mLedTrackingOn.setVisibility(View.GONE);
+            mLedTrackingError.setVisibility(View.GONE);
+
+            mLedGpsWait.setVisibility(View.GONE);
+            mLedGpsNew.setVisibility(View.GONE);
+
+            mLedUploadEmpty.setVisibility(View.GONE);
+            mLedUploadQueue.setVisibility(View.GONE);
+            mLedUploadUploading.setVisibility(View.GONE);
+            mLedUploadError.setVisibility(View.GONE);
+
+        } else if (mWTClient.gpsUpdatesManager.getStatus().isWarmingUp()) {
+            mLedTrackingOff.setVisibility(View.GONE);
+            mLedTrackingWarmUp.setVisibility(View.VISIBLE);
+            mLedTrackingOn.setVisibility(View.GONE);
+            mLedTrackingError.setVisibility(View.GONE);
+        } else if (mWTClient.gpsUpdatesManager.getStatus().isActive()) {
+            mLedTrackingOff.setVisibility(View.GONE);
+            mLedTrackingWarmUp.setVisibility(View.GONE);
+            mLedTrackingOn.setVisibility(View.VISIBLE);
+            mLedTrackingError.setVisibility(View.GONE);
         } else {
-            if (BuildConfig.DEBUG) {
-                Log.d(LT,
-                        String.format("updateLedBackground: mBackgroundService!=null, isUpdating=%b, isSuspended=%b",
-                                BackgroundService.sensorGPS.isUpdating,
-                                BackgroundService.sensorGPS.isSuspended
-                        ));
-            }
-            if (BackgroundService.sensorGPS.isUpdating) {
-                if (BackgroundService.sensorGPS.isSuspended) {
-                    mLedTrackingOff.setVisibility(View.GONE);
-                    mLedTrackingUnknown.setVisibility(View.GONE);
-                    mLedTrackingSuspended.setVisibility(View.VISIBLE);
-                    mLedTrackingOn.setVisibility(View.GONE);
-                } else {
-                    mLedTrackingOff.setVisibility(View.GONE);
-                    mLedTrackingUnknown.setVisibility(View.GONE);
-                    mLedTrackingSuspended.setVisibility(View.GONE);
-                    mLedTrackingOn.setVisibility(View.VISIBLE);
-                }
-            } else {
-                mLedTrackingOff.setVisibility(View.VISIBLE);
-                mLedTrackingUnknown.setVisibility(View.GONE);
-                mLedTrackingSuspended.setVisibility(View.GONE);
-                mLedTrackingOn.setVisibility(View.GONE);
-            }
+            mLedTrackingOff.setVisibility(View.GONE);
+            mLedTrackingWarmUp.setVisibility(View.GONE);
+            mLedTrackingOn.setVisibility(View.GONE);
+            mLedTrackingError.setVisibility(View.VISIBLE);
         }
     }
 
 
     private void updateAllViews() {
         updateUserStrategyChooser();
-        updateSwitch();
-        updateLedBackground();
+        updateSwitchOnOff();
+        updateLedTracking();
         updateTrackID();
         updateLedUploading();
         updateSound();
@@ -530,21 +490,34 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+    private void updateTrackIDWithSound(String notUsed) {
+        if (BuildConfig.DEBUG) {
+            Log.d(LT, "updateTrackIDWithSound ${notUsed}");
+        }
+        runOnUiThread(() -> {
+            updateTrackID();
+            MediaPlayerUtils.getInstance(this).playTrackID(this);
+        });
+    }
+
     private void updateTrackID() {
-        float alpha = (IDService.isProgress() && !IDService.sFailed)
+        boolean inProgress = mWTClient.wtClient.isRequestNewTrackerIdInProgress();
+        boolean failed = mWTClient.wtClient.isRequestNewTrackerIdFailed();
+
+        float alpha = (inProgress && !failed)
                 ? alphaIDinProgress : alphaIDnotInProgress;
         mBtnTrackID.setAlpha(alpha);
         mTextID.setAlpha(alpha);
         if (BuildConfig.DEBUG) {
             Log.d(LT,
-                    "updateTrackID id=\"" + mTrackID.get() + "\" isSet=" + mTrackID.isSet() +
-                            " failed=" + IDService.sFailed + " inProgress=" + IDService.isProgress() +
+                    "updateTrackID id=\"" + mWTClient.wtClient.getCurrentTrackerId() + "\" isSet=" + mWTClient.wtClient.hasTrackerId() +
+                            " failed=" + failed + " inProgress=" + inProgress +
                             " alpha=" + alpha);
         }
-        if (mTrackID.isSet()) {
-            mTextID.setText(mTrackID.get());
+        if (mWTClient.wtClient.hasTrackerId()) {
+            mTextID.setText(mWTClient.wtClient.getCurrentTrackerId());
         } else {
-            if (IDService.sFailed) {
+            if (failed) {
                 mTextID.setText(R.string.id_request_failed);
             } else {
                 mTextID.setText(" ... ");
@@ -593,6 +566,17 @@ public class MainActivity extends AppCompatActivity {
         mTextOff.setVisibility(View.GONE);
     }
 
+    private Unit onGPSUpdate(GPSUpdate gpsUpdate) {
+        if (BuildConfig.DEBUG) {
+            Log.d(LT, "onGPSUpdate " + gpsUpdate.toString());
+        }
+        runOnUiThread(() -> {
+            MediaPlayerUtils.getInstance(this).playGpsOk(this);
+            updateLedGpsNew();
+        });
+        return Unit.INSTANCE;
+    }
+
     private void updateLedGpsNew() {
         if (BuildConfig.DEBUG) {
             Log.d(LT, "updateLedGpsNew " + mLedGpsNewAnimated);
@@ -609,16 +593,27 @@ public class MainActivity extends AppCompatActivity {
         mLedUploadUploading.startAnimation(mLedUploadingAnimationFadeOut);
     }
 
-    private void updateLedUploading() {
+    private void onUploadStatusChanged(UploadingLocationsStatus status) {
         if (BuildConfig.DEBUG) {
-            Log.d(LT, "updateLedUploading " + sUploading + " " + uploadStatus().toString());
+            Log.d(LT, "onUploadStatusChanged " + status.toString());
         }
-        switch (uploadStatus()) {
+        runOnUiThread(() -> {
+            updateLedUploading();
+        });
+    }
+
+    private void updateLedUploading() {
+        UploadingLocationsStatus status = mWTClient.wtClient.getUploadingLocationsStatus();
+        if (BuildConfig.DEBUG) {
+            Log.d(LT, "updateLedUploading " + sUploading + " " + status.toString());
+        }
+        switch (status) {
             case QUEUED:
                 if (sUploading) {
                     fadeOutUploading();
                 } else {
                     mLedUploadQueue.setVisibility(View.VISIBLE);
+                    mLedUploadUploading.setVisibility(View.GONE);
                     mLedUploadError.setVisibility(View.GONE);
                 }
                 break;
@@ -629,13 +624,15 @@ public class MainActivity extends AppCompatActivity {
                 sUploading = true;
                 break;
             case ERROR:
+                MediaPlayerUtils.getInstance(this).playUploadFail(this);
                 if (sUploading) {
                     fadeOutUploading();
                 } else {
                     mLedUploadError.setVisibility(View.VISIBLE);
                 }
                 break;
-            default:
+            case EMPTY:
+                MediaPlayerUtils.getInstance(this).playUploadOk(this);
                 if (sUploading) {
                     fadeOutUploading();
                 } else {
@@ -656,55 +653,23 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void startService() {
-        if (mBackgroundService != null) {
-            mBackgroundService.start(false);
-        }
+    private void startTracking() {
+        mWTClient.turnTrackingOn();
     }
 
-    private void stopService() {
-        if (mBackgroundService != null) {
-            mBackgroundService.stop();
-        }
-    }
-
-    private void onPermissionRequest(PermissionRequest request) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (checkSelfPermission(request.permission) != PackageManager.PERMISSION_GRANTED) {
-                if (shouldShowRequestPermissionRationale(request.permission)) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                    builder.setMessage(R.string.request_location_permission)
-                            .setTitle(R.string.request_permission_title)
-                            .setPositiveButton(android.R.string.ok,
-                                    (dialog, which) -> {
-                                        int code = (int) Math.round(Math.random() * 1000);
-                                        requestPermissions(new String[]{request.permission}, code);
-                                    })
-                            .setNegativeButton(android.R.string.cancel, (dialog, which) -> dialog.cancel())
-                            .show();
-                } else {
-                    // isScanRequestAbortedBecauseOfPermission=true;
-                    int code = (int) Math.round(Math.random() * 1000);
-                    mPermissionRequests.put(code, request);
-                    ActivityCompat.requestPermissions(
-                            this,
-                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, code);
-                    WTApplication.faNoPermission();
-                }
-            }
-        }
+    private void stopTracking() {
+        mWTClient.turnTrackingOff();
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
+        GPSPermissionManager.handleOnRequestPermissionsResult(
+                requestCode,
+                mWTClient.gpsUpdatesManager,
+                mWTClient.isTrackingOn());
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        PermissionRequest request = (mPermissionRequests.get(requestCode, null));
-        if (request != null) {
-            mPermissionRequests.delete(requestCode);
-            request.restarter.restart();
-        }
     }
 
     @SuppressLint("MissingSuperCall")

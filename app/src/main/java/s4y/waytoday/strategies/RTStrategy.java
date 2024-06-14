@@ -7,7 +7,7 @@ public class RTStrategy implements Strategy {
     }
 
     @Override
-    public long getMinTime() {
+    public long getMinMs() {
         return 1000;
     }
 }

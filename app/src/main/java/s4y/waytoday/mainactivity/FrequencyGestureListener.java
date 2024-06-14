@@ -1,14 +1,6 @@
 package s4y.waytoday.mainactivity;
 
-import android.content.Context;
-import android.content.Intent;
 import android.graphics.Rect;
-import android.net.Uri;
-import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.PowerManager;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -16,23 +8,32 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+
+import s4y.gps.sdk.android.GPSPermissionManager;
 import s4y.waytoday.BuildConfig;
 import s4y.waytoday.R;
 import s4y.waytoday.WTApplication;
+import s4y.waytoday.analytics.Analytics;
 import s4y.waytoday.preferences.PreferenceUpdateFrequency;
 import s4y.waytoday.strategies.UserStrategy;
 
 public class FrequencyGestureListener extends GestureDetector.SimpleOnGestureListener {
     private static final String LT = FrequencyGestureListener.class.getSimpleName();
     @NonNull
-    private final PreferenceUpdateFrequency preference;
-    @NonNull
     private final ViewGroup parent;
 
     private final UserStrategy userStrategy;
 
-    public FrequencyGestureListener( @NonNull ViewGroup parent,
-                                    @NonNull PreferenceUpdateFrequency preference) {
+    private final Analytics analytics;
+
+    private final PreferenceUpdateFrequency preference;
+
+    public FrequencyGestureListener(
+            @NonNull Analytics analytics,
+            @NonNull ViewGroup parent,
+            @NonNull PreferenceUpdateFrequency preference
+    ) {
+        this.analytics = analytics;
         this.preference = preference;
         this.parent = parent;
         userStrategy = new UserStrategy(preference);
@@ -54,7 +55,7 @@ public class FrequencyGestureListener extends GestureDetector.SimpleOnGestureLis
             }
             preference.next();
         }
-        WTApplication.faFreqFling(userStrategy.getMinTime());
+        analytics.faFreqFling(userStrategy.getMinMs());
         return true;
     }
 
@@ -99,7 +100,7 @@ public class FrequencyGestureListener extends GestureDetector.SimpleOnGestureLis
                 }
             }
         }
-        WTApplication.faFreqTap(userStrategy.getMinTime());
+        analytics.faFreqTap(userStrategy.getMinMs());
         return super.onSingleTapUp(e);
     }
 }

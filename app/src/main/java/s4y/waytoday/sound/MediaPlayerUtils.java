@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import s4y.waytoday.errors.ErrorsObservable;
+import s4y.waytoday.preferences.PreferenceSound;
 
 import static android.content.Context.AUDIO_SERVICE;
 
@@ -25,6 +26,11 @@ public class MediaPlayerUtils {
     private int streamGpsOk;
     private int streamUploadOk;
     private int streamUploadFail;
+    static private PreferenceSound preferenceSound = null;
+
+    public static void setPreferenceSound(PreferenceSound preferenceSound) {
+        MediaPlayerUtils.preferenceSound = preferenceSound;
+    }
 
     private MediaPlayerUtils(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -88,6 +94,11 @@ public class MediaPlayerUtils {
 
     private void play(Context context, int streamID) {
         stopAll();
+        if (preferenceSound == null)
+            return;
+        if (preferenceSound.isOff()) {
+            return;
+        }
         AudioManager am = (AudioManager) context.getSystemService(AUDIO_SERVICE);
 
         if (am == null)

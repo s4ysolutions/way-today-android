@@ -17,7 +17,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.filters.LargeTest;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
-import s4y.waytoday.TestComponent;
+import s4y.waytoday.TestDaggerAppComponent;
 import s4y.waytoday.WTApplication;
 import s4y.waytoday.errors.ErrorNotification;
 import s4y.waytoday.errors.ErrorsObservable;
@@ -69,7 +69,7 @@ public class IDServiceTest {
         Admin.randReset();
 
         WTApplication application = ApplicationProvider.getApplicationContext();
-        TestComponent component = (TestComponent) application.getAppComponent();
+        TestDaggerAppComponent component = (TestDaggerAppComponent) application.getDaggerComponent();
         component.inject(this);
 
         reset(trackID);

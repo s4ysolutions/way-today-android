@@ -4,7 +4,7 @@ import android.content.Context;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.crashlytics.android.Crashlytics;
+import com.google.firebase.crashlytics.FirebaseCrashlytics;
 
 public class ErrorReporter { // for testing purpose
     private Toast mToast;
@@ -27,7 +27,7 @@ public class ErrorReporter { // for testing purpose
         if (err.th != null) {
             Log.e("WT message", err.getMessage(), err.th);
             try {
-                Crashlytics.logException(err.th);
+                FirebaseCrashlytics.getInstance().recordException(err.th);
             } catch (IllegalStateException e) {
                 // unit tests
                 Log.w("WT message", e);

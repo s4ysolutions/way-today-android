@@ -99,7 +99,7 @@ public class LocationsGPSUpdaterNoPermissionTest {
                 .when(mockLocationManager)
                 .requestLocationUpdates(
                         LocationManager.GPS_PROVIDER,
-                        new RTStrategy().getMinTime(),
+                        new RTStrategy().getMinMs(),
                         new RTStrategy().getMinDistance(),
                         mockLocationListener);
 

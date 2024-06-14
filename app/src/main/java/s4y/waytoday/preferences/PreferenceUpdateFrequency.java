@@ -144,6 +144,27 @@ public class PreferenceUpdateFrequency extends BaseStringPreference {
             return resid;
         }
 
+        public int getSeconds() {
+            switch (this) {
+                case HOUR1:
+                    return 3600;
+                case MIN30:
+                    return 1800;
+                case MIN15:
+                    return 900;
+                case MIN5:
+                    return 300;
+                case MIN1:
+                    return 60;
+                case SEC15:
+                    return 15;
+                case SEC5:
+                    return 5;
+                default:
+                    return 1;
+            }
+        }
+
         public int getTitleResID(int count) {
             Frequencies freq = count < 0 ? getPrev(-count) : getNext(count);
             if (freq == null)
