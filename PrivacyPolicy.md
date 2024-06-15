@@ -2,7 +2,7 @@ Privacy Policy for ITagOne
 
 1. Introduction
 
-This Privacy Policy explains how WayToday ("we," "our," or "us") collects, uses, discloses, and safeguards your personal information when you use our mobile application ITagOne (the "App").
+This Privacy Policy explains how WayToday ("we," "our," or "us") collects, uses, discloses, and safeguards your personal information when you use our mobile application WayToday (the "App").
 
 2. Information We Collect
 
