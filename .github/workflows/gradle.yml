@@ -28,13 +28,15 @@ jobs:
       - name: Build with bundleRelease
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
-          KEYSTORE: ${{ secrets.JKS }}
+          KEYSTORE: ${{ secrets.KEYSTORE }}
           SIGNING_KEY_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
         run: |
           echo "$GOOGLE_SERVICES_JSON" > app/src/google-services.json
-          echo "$KEYSTORE"|base64 -di > app/app.keystore
+          ls -la app/src/google-services.json
+          echo "$KEYSTORE"|base64 -d > app/app.keystore
+          ls -la app/app.keystore
           ./gradlew bundleRelease
 
       - name: Upload AAB artifact
