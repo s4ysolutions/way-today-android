@@ -6,11 +6,12 @@
 .hg
 .hgtags
 *.apk
-session.vim
+.session.vim
 .idea
 app/google-services.json
 app/release
 *.iml
 app/src/main/java/solutions/s4y/waytoday/wsse/Secret.java
 local.properties
+app/waytoday.river0.keystore
 
