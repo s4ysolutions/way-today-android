@@ -8,6 +8,9 @@ import javax.inject.Inject;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
+import s4y.gps.sdk.GPSUpdate;
 import s4y.gps.sdk.android.GPSPermissionManager;
 import s4y.gps.sdk.android.GPSUpdatesForegroundService;
 import s4y.waytoday.dagger.DaggerAppComponent;
@@ -19,6 +22,9 @@ import s4y.waytoday.preferences.PreferenceSound;
 import s4y.waytoday.preferences.PreferenceUpdateFrequency;
 import s4y.waytoday.sound.MediaPlayerUtils;
 import solutions.s4y.waytoday.sdk.AndroidWayTodayClient;
+import solutions.s4y.waytoday.sdk.ITrackIdChangeListener;
+import solutions.s4y.waytoday.sdk.IUploadingLocationsStatusChangeListener;
+import solutions.s4y.waytoday.sdk.UploadingLocationsStatus;
 import solutions.s4y.waytoday.sdk.WayTodayError;
 
 public class WTApplication extends Application {
@@ -89,6 +95,10 @@ public class WTApplication extends Application {
             GPSUpdatesForegroundService.setUseApplicationNotificationSmallIcon(true);
         }
 
+        androidWayToday.wtClient.addTrackIdChangeListener(updateTrackIDWithSound);
+        androidWayToday.gpsUpdatesManager.getLast().addListener(onGPSUpdate);
+        androidWayToday.wtClient.addUploadingLocationsStatusChangeListener(this.onUploadStatusChanged);
+
         if (androidWayToday.isTrackingOn() && !GPSPermissionManager.needPermissionRequest(this))
             GPSUpdatesForegroundService.start(this);
     }
@@ -98,10 +108,36 @@ public class WTApplication extends Application {
         appDisposables.dispose();
         androidWayToday.wtClient
                 .removeErrorsListener(this::onAndroidWayTodayClientError);
+        androidWayToday.wtClient
+                .removeTrackIdChangeListener(updateTrackIDWithSound);
+        androidWayToday.gpsUpdatesManager.getLast()
+                .removeListener(onGPSUpdate);
+        androidWayToday.wtClient
+                .removeUploadingLocationsStatusChangeListener(this.onUploadStatusChanged);
         super.onTerminate();
     }
 
     private void onAndroidWayTodayClientError(WayTodayError error) {
         ErrorsObservable.notify(error, false);
     }
+
+    private final ITrackIdChangeListener updateTrackIDWithSound = trackID -> MediaPlayerUtils.getInstance(this).playTrackID(this);
+
+    private final Function1<GPSUpdate, Unit> onGPSUpdate = (GPSUpdate gpsUpdate) -> {
+        MediaPlayerUtils.getInstance(this).playGpsOk(this);
+        return Unit.INSTANCE;
+    };
+    private final IUploadingLocationsStatusChangeListener onUploadStatusChanged= ignored -> {
+        UploadingLocationsStatus status = androidWayToday.wtClient.getUploadingLocationsStatus();
+        switch (status) {
+            case QUEUED:
+            case UPLOADING:
+                break;
+            case ERROR:
+                MediaPlayerUtils.getInstance(this).playUploadFail(this);
+                break;
+            case EMPTY:
+                MediaPlayerUtils.getInstance(this).playUploadOk(this);
+        }
+    };
 }

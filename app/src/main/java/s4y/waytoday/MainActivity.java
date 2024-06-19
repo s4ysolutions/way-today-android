@@ -18,8 +18,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GestureDetectorCompat;
 
-import java.util.function.Consumer;
-
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import kotlin.Unit;
@@ -35,7 +33,6 @@ import s4y.waytoday.mainactivity.FrequencyGestureListener;
 import s4y.waytoday.preferences.PreferenceSound;
 import s4y.waytoday.preferences.PreferenceUpdateFrequency;
 import s4y.waytoday.sound.MediaPlayerUtils;
-import s4y.waytoday.strategies.UserStrategy;
 import solutions.s4y.waytoday.sdk.AndroidWayTodayClient;
 import solutions.s4y.waytoday.sdk.ITrackIdChangeListener;
 import solutions.s4y.waytoday.sdk.IUploadingLocationsStatusChangeListener;
@@ -315,7 +312,7 @@ public class MainActivity extends AppCompatActivity {
                 .subject
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(ignored -> updateAllViews()));
-        mWTClient.wtClient.addTrackIdChangeListener(updateTrackIDWithSound);
+        mWTClient.wtClient.addTrackIdChangeListener(updateTrackIDWithDebug);
         mWTClient.gpsUpdatesManager.getStatus().addListener(onTrackingStatusChange);
         mWTClient.gpsUpdatesManager.getLast().addListener(onGPSUpdate);
         mWTClient.wtClient.addUploadingLocationsStatusChangeListener(this.onUploadStatusChanged);
@@ -324,9 +321,7 @@ public class MainActivity extends AppCompatActivity {
         }
         updateAllViews();
         if (mWTClient.isTrackingOn() && GPSPermissionManager.needPermissionRequest(this)) {
-            runOnUiThread(() -> {
-                GPSPermissionManager.requestPermissions(this);
-            });
+            runOnUiThread(() -> GPSPermissionManager.requestPermissions(this));
         }
     }
 
@@ -338,7 +333,7 @@ public class MainActivity extends AppCompatActivity {
             resumeDisposables.clear();
             resumeDisposables = null;
         }
-        mWTClient.wtClient.removeTrackIdChangeListener(updateTrackIDWithSound);
+        mWTClient.wtClient.removeTrackIdChangeListener(updateTrackIDWithDebug);
         mWTClient.gpsUpdatesManager.getStatus().removeListener(onTrackingStatusChange);
         mWTClient.gpsUpdatesManager.getLast().removeListener(onGPSUpdate);
         mWTClient.wtClient.removeUploadingLocationsStatusChangeListener(this.onUploadStatusChanged);
@@ -490,17 +485,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private final ITrackIdChangeListener updateTrackIDWithSound = new ITrackIdChangeListener() {
-        @Override
-        public void onTrackId(@NonNull String trackID) {
-            if (BuildConfig.DEBUG) {
-                Log.d(LT, "updateTrackIDWithSound ${notUsed}");
-            }
-            runOnUiThread(() -> {
-                updateTrackID();
-                MediaPlayerUtils.getInstance(MainActivity.this).playTrackID(MainActivity.this);
-            });
+    private final ITrackIdChangeListener updateTrackIDWithDebug = trackID -> {
+        if (BuildConfig.DEBUG) {
+            Log.d(LT, "updateTrackIDWithSound ${notUsed}");
         }
+        runOnUiThread(this::updateTrackID);
     };
 
     private void updateTrackID() {
@@ -574,7 +563,6 @@ public class MainActivity extends AppCompatActivity {
             Log.d(LT, "onGPSUpdate " + gpsUpdate.toString());
         }
         runOnUiThread(() -> {
-            MediaPlayerUtils.getInstance(this).playGpsOk(this);
             updateLedGpsNew();
         });
         return Unit.INSTANCE;
@@ -596,16 +584,11 @@ public class MainActivity extends AppCompatActivity {
         mLedUploadUploading.startAnimation(mLedUploadingAnimationFadeOut);
     }
 
-    private final IUploadingLocationsStatusChangeListener onUploadStatusChanged= new IUploadingLocationsStatusChangeListener() {
-        @Override
-        public void onStatusChange(UploadingLocationsStatus status) {
-            if (BuildConfig.DEBUG) {
-                Log.d(LT, "onUploadStatusChanged " + status.toString());
-            }
-            runOnUiThread(() -> {
-                updateLedUploading();
-            });
+    private final IUploadingLocationsStatusChangeListener onUploadStatusChanged= status -> {
+        if (BuildConfig.DEBUG) {
+            Log.d(LT, "onUploadStatusChanged " + status.toString());
         }
+        runOnUiThread(this::updateLedUploading);
     };
 
     private void updateLedUploading() {
@@ -630,7 +613,6 @@ public class MainActivity extends AppCompatActivity {
                 sUploading = true;
                 break;
             case ERROR:
-                MediaPlayerUtils.getInstance(this).playUploadFail(this);
                 if (sUploading) {
                     fadeOutUploading();
                 } else {
@@ -638,7 +620,6 @@ public class MainActivity extends AppCompatActivity {
                 }
                 break;
             case EMPTY:
-                MediaPlayerUtils.getInstance(this).playUploadOk(this);
                 if (sUploading) {
                     fadeOutUploading();
                 } else {
