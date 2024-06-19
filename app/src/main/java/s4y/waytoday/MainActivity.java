@@ -369,15 +369,19 @@ public class MainActivity extends AppCompatActivity {
     private static final float alphaIDinProgress = 0.3f;
     private static final float alphaIDnotInProgress = 0.9f;
 
-    long requestCount = 0;
+    long requestCount = 1;
+    long requestCountM = 3;
 
     private void requestIgnoreOptimization() {
-        if (requestCount++ < 3)
+        if (!mWTClient.isTrackingOn())
             return;
         boolean needRequestIgnoreOptimization =
                 GPSPowerManager.needRequestIgnoreOptimization(this);
         if (!needRequestIgnoreOptimization)
             return;
+        if (requestCount++ % requestCountM != 0)
+            return;
+        requestCountM++;
         GPSPowerManager.requestIgnoreOptimization(this);
     }
 
