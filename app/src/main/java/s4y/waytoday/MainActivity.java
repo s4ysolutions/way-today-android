@@ -1,8 +1,11 @@
 package s4y.waytoday;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -15,13 +18,16 @@ import android.widget.TextView;
 import javax.inject.Inject;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GestureDetectorCompat;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
+
 import s4y.gps.sdk.GPSUpdate;
 import s4y.gps.sdk.android.GPSPermissionManager;
 import s4y.gps.sdk.android.GPSPowerManager;
@@ -33,12 +39,15 @@ import s4y.waytoday.mainactivity.FrequencyGestureListener;
 import s4y.waytoday.preferences.PreferenceSound;
 import s4y.waytoday.preferences.PreferenceUpdateFrequency;
 import s4y.waytoday.sound.MediaPlayerUtils;
+
 import solutions.s4y.waytoday.sdk.AndroidWayTodayClient;
 import solutions.s4y.waytoday.sdk.ITrackIdChangeListener;
 import solutions.s4y.waytoday.sdk.IUploadingLocationsStatusChangeListener;
 import solutions.s4y.waytoday.sdk.UploadingLocationsStatus;
 
+
 public class MainActivity extends AppCompatActivity {
+    private static final int REQUEST_CODE_NOTIFICATION_PERMISSION = 123;
     private final static String LT = MainActivity.class.getSimpleName();
     @Inject
     PreferenceUpdateFrequency mUserStrategyFrequency;
@@ -86,24 +95,30 @@ public class MainActivity extends AppCompatActivity {
     private Animation mTextOnAnimationFadeOut;
     private Animation mTextOffAnimationFadeOut;
     private boolean isSwitching;
-    /*
-    SparseArray<PermissionRequest> mPermissionRequests = new SparseArray<>(2);
 
-    @NonNull
-    private final ServiceConnection mServiceConnection = new ServiceConnection() {
-        @Override
-        public void onServiceConnected(ComponentName className,
-                                       @NonNull IBinder binder) {
-            setBinder(binder);
+    private void checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT > 32) {
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                // Should we show rationale?
+                if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
+                    new AlertDialog.Builder(this)
+                            .setTitle("Notification Permission Required")
+                            .setMessage("The application will display an icon when running in the background so you can activate and stop it.")
+                            .setPositiveButton(
+                                    "OK",
+                                    (dialog, which) -> requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE_NOTIFICATION_PERMISSION))
+                            .setNegativeButton(
+                                    "Cancel",
+                                    null)
+                            .create()
+                            .show();
+                } else {
+                    // No explanation needed, request the permission directly
+                    requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQUEST_CODE_NOTIFICATION_PERMISSION);
+                }
+            }
         }
-
-        @Override
-        public void onServiceDisconnected(ComponentName arg0) {
-            mBackgroundService = null;
-            updateLedBackground();
-        }
-    };*/
-
+    }
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -164,8 +179,8 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.switch_on).setOnTouchListener((v, event) -> {
             if (isSwitching) return true;
-            if (GPSPermissionManager.needPermissionRequest(this)) {
-                GPSPermissionManager.requestPermissions(this);
+            if (GPSPermissionManager.needPermissionRequest(this, true)) {
+                GPSPermissionManager.requestPermissions(this, true);
             }
             startTracking();
             MediaPlayerUtils.getInstance(this).playSwitchSound(this);
@@ -197,6 +212,7 @@ public class MainActivity extends AppCompatActivity {
             mTextOn.setAlpha(1);
             mTextOn.startAnimation(mTextOnAnimationFadeOut);
             mAnalytics.faOn();
+            checkNotificationPermission();
             return true;
         });
 
@@ -248,8 +264,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btn_track_id).setOnClickListener((View view) -> {
-            mBtnTrackID.setAlpha(alphaIDinProgress);
-            mTextID.setAlpha(alphaIDinProgress);
+            mBtnTrackID.setAlpha(alphaIdInProgress);
+            mTextID.setAlpha(alphaIdInProgress);
             mWTClient.enqueueTrackIdWorkRequest(this);
             mAnalytics.faRequestID();
         });
@@ -290,6 +306,10 @@ public class MainActivity extends AppCompatActivity {
             startActivity(Intent.createChooser(sendIntent, getResources().getString(R.string.share_title)));
             mAnalytics.faShare();
         });
+
+        if (mWTClient.isTrackingOn() && !GPSPermissionManager.needPermissionRequest(this, true)) {
+            startTracking();
+        }
     }
 
     @Override
@@ -320,8 +340,8 @@ public class MainActivity extends AppCompatActivity {
             mWTClient.enqueueTrackIdWorkRequest(this);
         }
         updateAllViews();
-        if (mWTClient.isTrackingOn() && GPSPermissionManager.needPermissionRequest(this)) {
-            runOnUiThread(() -> GPSPermissionManager.requestPermissions(this));
+        if (mWTClient.isTrackingOn() && GPSPermissionManager.needPermissionRequest(this, true)) {
+            runOnUiThread(() -> GPSPermissionManager.requestPermissions(this, true));
         }
     }
 
@@ -337,7 +357,7 @@ public class MainActivity extends AppCompatActivity {
         mWTClient.gpsUpdatesManager.getStatus().removeListener(onTrackingStatusChange);
         mWTClient.gpsUpdatesManager.getLast().removeListener(onGPSUpdate);
         mWTClient.wtClient.removeUploadingLocationsStatusChangeListener(this.onUploadStatusChanged);
-        if (mWTClient.isTrackingOn() && !GPSPermissionManager.needPermissionRequest(this))
+        if (mWTClient.isTrackingOn() && !GPSPermissionManager.needPermissionRequest(this, true))
             GPSUpdatesForegroundService.start(this);
         super.onPause();
     }
@@ -361,11 +381,11 @@ public class MainActivity extends AppCompatActivity {
     };
 
     private boolean mLedGpsNewAnimated = false;
-    private static final float alphaIDinProgress = 0.3f;
-    private static final float alphaIDnotInProgress = 0.9f;
+    private static final float alphaIdInProgress = 0.3f;
+    private static final float alphaIdNotInProgress = 0.9f;
 
     long requestCount = 1;
-    long requestCountM = 3;
+    long requestCountM = 5;
 
     private void requestIgnoreOptimization() {
         if (!mWTClient.isTrackingOn())
@@ -432,7 +452,7 @@ public class MainActivity extends AppCompatActivity {
         if (BuildConfig.DEBUG) {
             Log.d(LT, String.format("updateLedTracking: status=%s, needPermissionRequest=%b",
                     mWTClient.gpsUpdatesManager.getStatus(),
-                    GPSPermissionManager.needPermissionRequest(this)
+                    GPSPermissionManager.needPermissionRequest(this, true)
             ));
         }
 
@@ -497,7 +517,7 @@ public class MainActivity extends AppCompatActivity {
         boolean failed = mWTClient.wtClient.isRequestNewTrackerIdFailed();
 
         float alpha = (inProgress && !failed)
-                ? alphaIDinProgress : alphaIDnotInProgress;
+                ? alphaIdInProgress : alphaIdNotInProgress;
         mBtnTrackID.setAlpha(alpha);
         mTextID.setAlpha(alpha);
         if (BuildConfig.DEBUG) {
@@ -562,9 +582,7 @@ public class MainActivity extends AppCompatActivity {
         if (BuildConfig.DEBUG) {
             Log.d(LT, "onGPSUpdate " + gpsUpdate.toString());
         }
-        runOnUiThread(() -> {
-            updateLedGpsNew();
-        });
+        runOnUiThread(this::updateLedGpsNew);
         return Unit.INSTANCE;
     };
 
@@ -584,7 +602,7 @@ public class MainActivity extends AppCompatActivity {
         mLedUploadUploading.startAnimation(mLedUploadingAnimationFadeOut);
     }
 
-    private final IUploadingLocationsStatusChangeListener onUploadStatusChanged= status -> {
+    private final IUploadingLocationsStatusChangeListener onUploadStatusChanged = status -> {
         if (BuildConfig.DEBUG) {
             Log.d(LT, "onUploadStatusChanged " + status.toString());
         }
@@ -657,6 +675,9 @@ public class MainActivity extends AppCompatActivity {
                 mWTClient.gpsUpdatesManager,
                 mWTClient.isTrackingOn());
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            checkNotificationPermission();
+        }
     }
 
     @SuppressLint("MissingSuperCall")

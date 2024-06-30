@@ -11,7 +11,6 @@ import io.reactivex.disposables.CompositeDisposable;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import s4y.gps.sdk.GPSUpdate;
-import s4y.gps.sdk.android.GPSPermissionManager;
 import s4y.gps.sdk.android.GPSUpdatesForegroundService;
 import s4y.waytoday.dagger.DaggerAppComponent;
 import s4y.waytoday.dagger.DaggerDaggerAppComponent;
@@ -98,9 +97,6 @@ public class WTApplication extends Application {
         androidWayToday.wtClient.addTrackIdChangeListener(updateTrackIDWithSound);
         androidWayToday.gpsUpdatesManager.getLast().addListener(onGPSUpdate);
         androidWayToday.wtClient.addUploadingLocationsStatusChangeListener(this.onUploadStatusChanged);
-
-        if (androidWayToday.isTrackingOn() && !GPSPermissionManager.needPermissionRequest(this))
-            GPSUpdatesForegroundService.start(this);
     }
 
     @Override
