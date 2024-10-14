@@ -16,6 +16,9 @@ unique 4-digit code from the tracker app.
 Moreover, the web service allows tracking the movement of multiple tracker owners simultaneously.
 
 ## Android application
+
+[Play Store](https://play.google.com/store/apps/details?id=s4y.waytoday)
+
 WayToday Android is an android application to
 
  - request tracking ID from the web-service (gRPC)
